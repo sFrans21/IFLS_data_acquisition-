@@ -815,46 +815,89 @@ def main():
         else:
             print("   -> [WARN] Tidak ada responden makan mie instan di FM2.")
 
+# ---------------------------------------------------------
+    # 6. PENGUKURAN FISIK (KOREKSI SCHEMA & HITUNG IMT)
     # ---------------------------------------------------------
-    # 6. PENGUKURAN FISIK (IMT, Pinggang, Tensi)
-    # ---------------------------------------------------------
-    print("\n[6/7] Memproses Fisik & Target Tensi (US)...")
+    print("\n[6/7] Memproses Fisik & Target Tensi (US) - Schema Corrected...")
     df_us, _ = load_data('hh14_bus_dta', 'bus_us.dta')
+    
     if df_us is not None:
-        # us01: Berat(kg), us02: Tinggi(cm), us06/us11: Pinggang, us07a1/b1: Tensi
-        waist_col = 'us06' if 'us06' in df_us.columns else 'us11'
-        target_cols = ['pidlink', 'us01', 'us02', waist_col, 'us07a1', 'us07b1']
+        # Mapping hasil audit metadata
+        rename_map = {
+            'us06': 'weight_kg',      # Berat
+            'us04': 'height_cm',      # Tinggi
+            'us06a': 'waist_cm',      # Lingkar Pinggang
+            'us07a1': 'bp_systolic',  # Sistolik 1
+            'us07a2': 'bp_diastolic'  # Diastolik 1 (KOREKSI!)
+        }
         
-        cols_exist = [c for c in target_cols if c in df_us.columns]
-        if len(cols_exist) > 1:
-            df_phys = df_us[cols_exist].copy()
-            rename_map = {
-                'us01': 'weight_kg', 'us02': 'height_cm', waist_col: 'waist_cm',
-                'us07a1': 'bp_systolic', 'us07b1': 'bp_diastolic'
-            }
-            df_phys = df_phys.rename(columns=rename_map)
-            # Bersihkan duplikat
-            df_phys = df_phys.drop_duplicates(subset='pidlink')
-            master_df = pd.merge(master_df, df_phys, on='pidlink', how='left')
-            print("   -> Fisik & Tensi merged.")
+        target_cols = ['pidlink'] + list(rename_map.keys())
+        existing_cols = [c for c in target_cols if c in df_us.columns]
+        
+        df_phys = df_us[existing_cols].rename(columns=rename_map)
+        
+        # --- FEATURE ENGINEERING: IMT (BMI) ---
+        # Rumus: BB / (TB dalam meter)^2
+        # Kita gunakan .copy() untuk menghindari SettingWithCopyWarning
+        df_phys = df_phys.copy()
+        
+        # Validasi TB tidak nol untuk menghindari division by zero
+        mask_bmi = (df_phys['height_cm'] > 0) & (df_phys['weight_kg'] > 0)
+        df_phys.loc[mask_bmi, 'bmi'] = df_phys['weight_kg'] / ((df_phys['height_cm'] / 100) ** 2)
+        
+        df_phys = df_phys.drop_duplicates(subset='pidlink')
+        master_df = pd.merge(master_df, df_phys, on='pidlink', how='left')
+        print(f"   -> Fisik, Tensi, & IMT berhasil di-merge. Kolom: {list(df_phys.columns)}")
 
+   # ---------------------------------------------------------
+    # 7. RIWAYAT ORANG TUA (SMART SEARCH FALLBACK)
     # ---------------------------------------------------------
-    # 7. RIWAYAT ORANG TUA
-    # ---------------------------------------------------------
-    print("\n[7/7] Memproses Riwayat Ortu (BA)...")
+    print("\n[7/7] Memproses Riwayat Ortu (BA) - Smart Search...")
     df_ba, _ = load_data('hh14_b3b_dta', 'b3b_ba1.dta')
+    
     if df_ba is not None:
-        # ba15: Ayah, ba42: Ibu
-        cols = ['pidlink']
-        if 'ba15' in df_ba.columns: cols.append('ba15')
-        if 'ba42' in df_ba.columns: cols.append('ba42')
+        # Prioritas Pencarian Kolom:
+        # 1. ba03/ba31 (Standar Baku)
+        # 2. ba15_a/ba15_b (Alternatif Metadata)
+        # 3. ba15 (Versi Lama)
         
-        if len(cols) > 1:
-            df_parents = df_ba[cols].rename(columns={'ba15': 'father_health', 'ba42': 'mother_health'})
+        # Logika Pencarian Ayah
+        col_ayah = None
+        for cand in ['ba03', 'ba15_a', 'ba15']:
+            if cand in df_ba.columns:
+                col_ayah = cand
+                break
+        
+        # Logika Pencarian Ibu
+        col_ibu = None
+        for cand in ['ba31', 'ba15_b', 'ba42']:
+            if cand in df_ba.columns:
+                col_ibu = cand
+                break
+        
+        # Eksekusi Merge
+        cols_to_merge = ['pidlink']
+        rename_dict = {}
+        
+        if col_ayah:
+            cols_to_merge.append(col_ayah)
+            rename_dict[col_ayah] = 'father_health'
+            print(f"   -> Ayah ditemukan di kolom: {col_ayah}")
+            
+        if col_ibu:
+            cols_to_merge.append(col_ibu)
+            rename_dict[col_ibu] = 'mother_health'
+            print(f"   -> Ibu ditemukan di kolom: {col_ibu}")
+
+        if len(cols_to_merge) > 1:
+            df_parents = df_ba[cols_to_merge].rename(columns=rename_dict)
             df_parents = df_parents.drop_duplicates(subset='pidlink')
             master_df = pd.merge(master_df, df_parents, on='pidlink', how='left')
-            print("   -> Riwayat Ortu merged.")
-
+            print("   -> [SUKSES] Riwayat Ortu berhasil di-merge.")
+        else:
+            print("   -> [GAGAL] Tidak ada variabel kesehatan ortu yang cocok.")
+            
+            
     # ---------------------------------------------------------
     # FINALISASI
     # ---------------------------------------------------------
