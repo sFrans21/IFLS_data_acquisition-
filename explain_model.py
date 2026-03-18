@@ -15,11 +15,14 @@ if not os.path.exists(OUTPUT_DIR):
 
 print("--- FASE 4: EXPLAINABLE AI (MENGAPA MODEL MEMPREDIKSI ITU?) ---")
 
+# Buang data umur yang tidak masuk akal (Kode 998/999 di IFLS)
+
 # 1. LOAD & PREPARE DATA (Sama seperti Training)
 df = pd.read_csv('dataset_hipertensi_clean.csv')
 X = df.drop(columns=['label_hypertension', 'bp_systolic', 'bp_diastolic'], errors='ignore')
 X = X.select_dtypes(include=[np.number]).fillna(0)
 y = df['label_hypertension']
+df = df[df['age'] < 100]
 
 # Split & Scale
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
