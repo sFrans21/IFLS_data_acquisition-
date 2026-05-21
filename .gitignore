@@ -1,0 +1,6 @@
+# Mengabaikan environment variables
+backend/.env
+*.env
+
+# Mengabaikan virtual environment Python (Wajib!)
+.venv/
