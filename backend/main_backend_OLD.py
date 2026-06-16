@@ -134,24 +134,133 @@
 
 
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from services.ml_service import predict_risk
-from services.xai_service import get_top_risk_factors # <-- [FIX 1] Import XAI Service
-import pandas as pd
-import numpy as np
-import os
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel, Field
+# from services.ml_service import predict_risk
+# from services.xai_service import get_top_risk_factors # <-- [FIX 1] Import XAI Service
+# import pandas as pd
+# import numpy as np
+# import os
 
-# Inisialisasi Aplikasi FastAPI
+# # Inisialisasi Aplikasi FastAPI
+# app = FastAPI(
+#     title="HypertensAI Backend",
+#     description="API untuk Prediksi Risiko Hipertensi, XAI, dan LLM Narrative",
+#     version="1.0.0"
+# )
+
+# # ==========================================
+# # 1. SCHEMAS (KONTRAK API)
+# # ==========================================
+
+# class PredictionRequest(BaseModel):
+#     age: float
+#     systolic_bp: float
+#     diastolic_bp: float
+#     height_cm: float
+#     weight_kg: float
+#     bmi: float
+#     is_smoker: int
+#     has_diabetes: int
+#     is_female: int
+#     freq_instant_noodle: int
+#     ak02: int
+#     ak05: int
+#     ak07: int
+#     ps_A: int
+#     ps_B: int
+#     ps_C: int
+#     ps_E: int
+#     ps_F: int
+#     genetic_risk_score: int
+
+# class ShapValues(BaseModel):
+#     pass 
+
+# class PredictionResponse(BaseModel):
+#     prediction_score: float
+#     risk_level: str
+#     shap_values: dict
+#     narrative: str
+
+# # ==========================================
+# # 2. ENDPOINT UTAMA
+# # ==========================================
+
+# @app.post("/predict", response_model=PredictionResponse)
+# async def predict_hypertension(payload: PredictionRequest):
+#     try:
+#         # --- A. PREPROCESSING ---
+#         input_dict = payload.model_dump()
+        
+#         # Simpan nilai Tensi untuk keperluan Prompt LLM nanti sebelum di-drop
+#         sys_bp = input_dict['systolic_bp']
+#         dia_bp = input_dict['diastolic_bp']
+        
+#         # DROP fitur yang menyebabkan Data Leakage atau tidak dipakai model AI
+#         columns_to_drop = ['systolic_bp', 'diastolic_bp', 'height_cm', 'weight_kg']
+#         for col in columns_to_drop:
+#             input_dict.pop(col, None)
+            
+#         # [FIX 2] Baris inject dummy waist_cm dihapus! Biarkan Service Layer yang handle via JSON Imputasi
+        
+#         # --- B. PREDIKSI MACHINE LEARNING (REAL) ---
+#         real_score = predict_risk(input_dict)
+
+#         # [FIX 3] Gunakan threshold optimal XGBoost lu
+#         risk_label = "Risiko Tinggi" if real_score >= 0.2806 else "Risiko Rendah"
+
+#         # --- C. EXPLAINABLE AI / SHAP (REAL) ---
+#         # [FIX 4] Panggil XAI Service untuk dapetin nilai SHAP asli
+#         real_shap_values = get_top_risk_factors(input_dict, top_n=3)
+        
+#         # --- D. LLM NARRATIVE / RAG (Placeholder) ---
+#         dummy_narrative = f"Berdasarkan analisis, faktor-faktor di atas memicu risiko hipertensi Anda. Tekanan darah Anda yang diinputkan ({sys_bp}/{dia_bp}) juga menjadi catatan penting. Kurangi garam sesuai pedoman JNC-7."
+        
+#         # --- E. KEMBALIKAN RESPONSE KE FLUTTER ---
+#         return PredictionResponse(
+#             prediction_score=real_score,
+#             risk_level=risk_label,
+#             shap_values=real_shap_values, # <-- [FIX 5] Oper variabel aslinya, bukan dummy
+#             narrative=dummy_narrative
+#         )
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+# @app.get("/")
+# async def root():
+#     return {
+#         "message": "Welcome ke HypertensAI backend API!",
+#         "status": "Running",
+#         "docs": "Silahkan buka http://127.0.0.1:8000/docs untuk melihat dokumentasi API"
+#     }
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main_backend:app", host="127.0.0.1", port=8000, reload=True)
+
+
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from services.ml_service import predict_risk
+from services.xai_service import get_top_risk_factors
+
 app = FastAPI(
     title="HypertensAI Backend",
     description="API untuk Prediksi Risiko Hipertensi, XAI, dan LLM Narrative",
     version="1.0.0"
 )
 
-# ==========================================
-# 1. SCHEMAS (KONTRAK API)
-# ==========================================
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class PredictionRequest(BaseModel):
     age: float
@@ -174,54 +283,35 @@ class PredictionRequest(BaseModel):
     ps_F: int
     genetic_risk_score: int
 
-class ShapValues(BaseModel):
-    pass 
-
 class PredictionResponse(BaseModel):
     prediction_score: float
     risk_level: str
     shap_values: dict
     narrative: str
 
-# ==========================================
-# 2. ENDPOINT UTAMA
-# ==========================================
-
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_hypertension(payload: PredictionRequest):
     try:
-        # --- A. PREPROCESSING ---
         input_dict = payload.model_dump()
         
-        # Simpan nilai Tensi untuk keperluan Prompt LLM nanti sebelum di-drop
         sys_bp = input_dict['systolic_bp']
         dia_bp = input_dict['diastolic_bp']
         
-        # DROP fitur yang menyebabkan Data Leakage atau tidak dipakai model AI
         columns_to_drop = ['systolic_bp', 'diastolic_bp', 'height_cm', 'weight_kg']
         for col in columns_to_drop:
             input_dict.pop(col, None)
             
-        # [FIX 2] Baris inject dummy waist_cm dihapus! Biarkan Service Layer yang handle via JSON Imputasi
-        
-        # --- B. PREDIKSI MACHINE LEARNING (REAL) ---
         real_score = predict_risk(input_dict)
-
-        # [FIX 3] Gunakan threshold optimal XGBoost lu
         risk_label = "Risiko Tinggi" if real_score >= 0.2806 else "Risiko Rendah"
 
-        # --- C. EXPLAINABLE AI / SHAP (REAL) ---
-        # [FIX 4] Panggil XAI Service untuk dapetin nilai SHAP asli
         real_shap_values = get_top_risk_factors(input_dict, top_n=3)
         
-        # --- D. LLM NARRATIVE / RAG (Placeholder) ---
         dummy_narrative = f"Berdasarkan analisis, faktor-faktor di atas memicu risiko hipertensi Anda. Tekanan darah Anda yang diinputkan ({sys_bp}/{dia_bp}) juga menjadi catatan penting. Kurangi garam sesuai pedoman JNC-7."
         
-        # --- E. KEMBALIKAN RESPONSE KE FLUTTER ---
         return PredictionResponse(
             prediction_score=real_score,
             risk_level=risk_label,
-            shap_values=real_shap_values, # <-- [FIX 5] Oper variabel aslinya, bukan dummy
+            shap_values=real_shap_values,
             narrative=dummy_narrative
         )
 
@@ -232,10 +322,9 @@ async def predict_hypertension(payload: PredictionRequest):
 async def root():
     return {
         "message": "Welcome ke HypertensAI backend API!",
-        "status": "Running",
-        "docs": "Silahkan buka http://127.0.0.1:8000/docs untuk melihat dokumentasi API"
+        "status": "Running"
     }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main_backend:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main_backend_OLD:app", host="127.0.0.1", port=8000, reload=True)

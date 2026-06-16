@@ -5,6 +5,8 @@ import pandas as pd
 # 1. Tentukan Path ke file .pkl
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "logistic_regression_model.pkl")
+# MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_model.pkl")
+
 SCALER_PATH = os.path.join(BASE_DIR, "models", "saved_models", "standard_scaler.pkl")
 
 # 2. Load Model & Scaler ke Memory (Global Variables)

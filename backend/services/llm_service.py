@@ -290,7 +290,7 @@ client = OpenAI(
 )
 
 # Konfigurasi Path ChromaDB
-DB_DIR = os.path.join(BASE_DIR, "chrom_db")
+DB_DIR = os.path.join(BASE_DIR, "chroma_db")
 
 # Inisialisasi ChromaDB
 chroma_client = chromadb.PersistentClient(path=DB_DIR)

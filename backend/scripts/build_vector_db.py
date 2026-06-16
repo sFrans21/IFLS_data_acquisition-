@@ -5,7 +5,7 @@ from chromadb.utils import embedding_functions
 #Config path direktori
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KB_DIR = os.path.join(BASE_DIR, "data", "knowledge_base")
-DB_DIR = os.path.join(BASE_DIR, "chrom_db")
+DB_DIR = os.path.join(BASE_DIR, "chroma_db")
 
 print("Memulai proses Indexing Knowledge Base...")
 

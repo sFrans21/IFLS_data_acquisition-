@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv('dataset_hipertensi_clean.csv')
+df = pd.read_csv('master_dataset_raw_final.csv')
 
 print("=" * 55)
-print("  PROFIL DATASET: dataset_hipertensi_clean.csv")
+print("  PROFIL DATASET: master_dataset_raw_final.csv")
 print("=" * 55)
 
 print(f"\n[UKURAN]")
@@ -25,7 +25,7 @@ print(f"\n[MISSING VALUES]")
 missing = df.isnull().sum()
 missing = missing[missing > 0]
 if len(missing) == 0:
-    print("  Tidak ada missing value ✅")
+    print("  Tidak ada missing value ")
 else:
     print(missing)
 

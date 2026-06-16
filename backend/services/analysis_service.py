@@ -2,8 +2,9 @@ import os
 import joblib
 import pandas as pd
 import shap # Pastikan lu udah pip install shap
+from backend.services.ml_service import predict_risk
 from backend.services.llm_service import generate_clinical_narrative
-
+from backend.services.xai_service import get_top_risk_factors
 # ==========================================
 # 1. LOAD MODEL & SCALER (Saat Server Menyala)
 # ==========================================
@@ -65,17 +66,25 @@ def run_full_clinical_analysis(patient_data_dict: dict):
     risk_score = float(model.predict_proba(df_final)[0][1])
     risk_status = "High Risk" if risk_score > 0.5 else "Low Risk"
 
-    # 4. EXPLAINABLE AI (SHAP)
-    top_features = {}
-    if explainer:
-        shap_values = explainer.shap_values(df_final) # Pastikan SHAP juga pakai df_final
-        feature_importance = dict(zip(df_final.columns, shap_values[0]))
+    # # 4. EXPLAINABLE AI (SHAP)
+    # top_features = {}
+    # if explainer:
+    #     shap_values = explainer.shap_values(df_final) # Pastikan SHAP juga pakai df_final
+    #     feature_importance = dict(zip(df_final.columns, shap_values[0]))
         
-        top_features = dict(sorted(
-            {k: float(v) for k, v in feature_importance.items() if v > 0}.items(),
-            key=lambda item: item[1], 
-            reverse=True
-        )[:3])
+    #     top_features = dict(sorted(
+    #         {k: float(v) for k, v in feature_importance.items() if v > 0}.items(),
+    #         key=lambda item: item[1], 
+    #         reverse=True
+    #     )[:3])
+    
+    # 4. EXPLAINABLE AI (SHAP) - DIDELEGASIKAN KE XAI SERVICE
+    try:
+        # Langsung panggil service yang sudah Anda buat dengan benar
+        top_features = get_top_risk_factors(patient_data_dict)
+    except Exception as e:
+        print(f"XAI Error: {e}")
+        top_features = {}
 
     # 5. GENERASI NARASI MEDIS (RAG + LLM)
     clinical_narrative = generate_clinical_narrative(patient_data_dict, top_features, risk_score, risk_status)

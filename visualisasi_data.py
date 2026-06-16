@@ -10,7 +10,7 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 print("--- MEMULAI VISUALISASI DATA (EDA) ---")
-df = pd.read_csv('dataset_hipertensi_clean.csv')
+df = pd.read_csv('master_dataset_raw_final.csv')
 
 # 1. DISTRIBUSI TARGET (Pie Chart)
 # Untuk melihat seberapa seimbang data kita
