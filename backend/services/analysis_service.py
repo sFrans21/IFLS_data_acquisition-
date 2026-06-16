@@ -32,39 +32,49 @@ except:
 # 2. FUNGSI ORKESTRATOR (PIPA INTEGRASI)
 # ==========================================
 def run_full_clinical_analysis(patient_data_dict: dict):
-    # 1. Ubah input dari Frontend menjadi DataFrame
-    df_raw = pd.DataFrame([patient_data_dict])
+    # # 1. Ubah input dari Frontend menjadi DataFrame
+    # df_raw = pd.DataFrame([patient_data_dict])
     
-    # --- TAHAP A: MELEWATI SCALER (15 KOLOM) ---
-    if hasattr(scaler, 'feature_names_in_'):
-        scaler_cols = scaler.feature_names_in_
-    else:
-        scaler_cols = df_raw.columns
+    # # --- TAHAP A: MELEWATI SCALER (15 KOLOM) ---
+    # if hasattr(scaler, 'feature_names_in_'):
+    #     scaler_cols = scaler.feature_names_in_
+    # else:
+    #     scaler_cols = df_raw.columns
         
-    df_for_scaler = df_raw.reindex(columns=scaler_cols, fill_value=0)
-    scaled_values = scaler.transform(df_for_scaler)
-    df_scaled = pd.DataFrame(scaled_values, columns=scaler_cols)
+    # df_for_scaler = df_raw.reindex(columns=scaler_cols, fill_value=0)
+    # scaled_values = scaler.transform(df_for_scaler)
+    # df_scaled = pd.DataFrame(scaled_values, columns=scaler_cols)
 
-    # --- TAHAP B: MENYESUAIKAN DENGAN XGBOOST (16 KOLOM) ---
-    if hasattr(model, 'feature_names_in_'):
-        model_cols = list(model.feature_names_in_)
-    elif hasattr(model, 'get_booster'):
-        model_cols = model.get_booster().feature_names
-    else:
-        model_cols = list(df_scaled.columns)
+    # # --- TAHAP B: MENYESUAIKAN DENGAN XGBOOST (16 KOLOM) ---
+    # if hasattr(model, 'feature_names_in_'):
+    #     model_cols = list(model.feature_names_in_)
+    # elif hasattr(model, 'get_booster'):
+    #     model_cols = model.get_booster().feature_names
+    # else:
+    #     model_cols = list(df_scaled.columns)
         
-    # Suntikkan kolom yang diminta XGBoost tapi tidak ada di Scaler (contoh: ak05)
-    for col in model_cols:
-        if col not in df_scaled.columns:
-            # Ambil langsung dari data raw/dict, kasih 0 kalau kosong
-            df_scaled[col] = patient_data_dict.get(col, 0)
+    # # Suntikkan kolom yang diminta XGBoost tapi tidak ada di Scaler (contoh: ak05)
+    # for col in model_cols:
+    #     if col not in df_scaled.columns:
+    #         # Ambil langsung dari data raw/dict, kasih 0 kalau kosong
+    #         df_scaled[col] = patient_data_dict.get(col, 0)
             
-    # Urutkan final sesuai kemauan mutlak XGBoost
-    df_final = df_scaled[model_cols]
+    # # Urutkan final sesuai kemauan mutlak XGBoost
+    # df_final = df_scaled[model_cols]
 
-    # 3. PREDIKSI (MACHINE LEARNING)
-    risk_score = float(model.predict_proba(df_final)[0][1])
-    risk_status = "High Risk" if risk_score > 0.5 else "Low Risk"
+    # # 3. PREDIKSI (MACHINE LEARNING)
+    # risk_score = float(model.predict_proba(df_final)[0][1])
+    # risk_status = "High Risk" if risk_score > 0.5 else "Low Risk"
+
+
+
+
+    # 1. PREDIKSI (MACHINE LEARNING) - Didelegasikan ke ML Service
+    try:
+        risk_score = predict_risk(patient_data_dict)
+        risk_status = "High Risk" if risk_score > 0.5 else "Low Risk"
+    except Exception as e:
+        raise ValueError(f"ML Prediction Error: {e}")
 
     # # 4. EXPLAINABLE AI (SHAP)
     # top_features = {}
