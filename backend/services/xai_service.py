@@ -114,16 +114,17 @@ def get_top_risk_factors(input_dict: dict, top_n: int = 3) -> dict:
     shap_values = explainer.shap_values(df_input.to_numpy())
     
     # D. Ekstraksi dan Pengurutan Fitur
+    # Ambil nilai SHAP BERTANDA (jangan di-abs):
+    # positif = menaikkan risiko, negatif = menurunkan risiko.
     if isinstance(shap_values, list):
-        feature_impacts = np.abs(shap_values[1][0])
+        feature_impacts = shap_values[1][0]
     else:
-        feature_impacts = np.abs(shap_values[0])
+        feature_impacts = shap_values[0]
     
-    # Gabungkan nama fitur dengan nilai SHAP-nya
     impact_dict = {feature: float(impact) for feature, impact in zip(training_features, feature_impacts)}
     
-    # Urutkan dari dampak paling besar
-    sorted_impacts = dict(sorted(impact_dict.items(), key=lambda item: item[1], reverse=True))
+    # Urutkan berdasarkan MAGNITUDO (nilai absolut), tetapi simpan nilai bertandanya.
+    sorted_impacts = dict(sorted(impact_dict.items(), key=lambda item: abs(item[1]), reverse=True))
     top_features = dict(list(sorted_impacts.items())[:top_n])
     
     return top_features

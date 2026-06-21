@@ -384,45 +384,60 @@ def generate_clinical_narrative(patient_profile: dict, top_shap_features: dict, 
         print(f"Error saat retrieval: {e}")
         context_text = "Gagal mengambil dokumen referensi."
 
-    # --- Hitung kontribusi tiap faktor (normalisasi nilai SHAP, sama dgn frontend) ---
+# --- Klasifikasi faktor: arah (tanda SHAP) + bisa/tidak bisa diubah ---
+    NON_MODIFIABLE = {"age", "is_female", "genetic_risk_score"}
+
     total_impact = sum(abs(v) for v in top_shap_features.values())
     ranked = sorted(top_shap_features.items(), key=lambda kv: abs(kv[1]), reverse=True)
 
-    if total_impact > 0:
-        factor_parts = []
-        for key, value in ranked:
-            nama = NAME_MAP.get(key, key)
-            persen = abs(value) / total_impact * 100
-            factor_parts.append(f"{nama} sebanyak {persen:.1f}%")
-        if len(factor_parts) > 1:
-            faktor_phrase = ", ".join(factor_parts[:-1]) + ", dan " + factor_parts[-1]
-        else:
-            faktor_phrase = factor_parts[0]
-    else:
-        faktor_phrase = "beberapa faktor gaya hidup dan klinis"
+    def pct(value):
+        return (abs(value) / total_impact * 100) if total_impact > 0 else 0.0
+
+    # Untuk NARASI: fokus 3 faktor terbesar, dipisah berdasarkan arahnya.
+    naik, turun = [], []
+    for key, value in ranked[:3]:
+        nama = NAME_MAP.get(key, key)
+        frase = f"{nama} ({pct(value):.1f}%)"
+        (naik if value > 0 else turun).append(frase)
+
+    # Untuk PROMPT: kelompokkan target saran.
+    target_saran = [NAME_MAP.get(k, k) for k, v in ranked[:3] if v > 0 and k not in NON_MODIFIABLE]
+    faktor_tetap = [NAME_MAP.get(k, k) for k, v in ranked[:3] if v > 0 and k in NON_MODIFIABLE]
+    faktor_protektif = [NAME_MAP.get(k, k) for k, v in ranked[:3] if v < 0]
 
     kategori = "tinggi" if "high" in risk_status.lower() else "rendah"
 
+    def gabung(items):
+        if len(items) > 1:
+            return ", ".join(items[:-1]) + ", dan " + items[-1]
+        return items[0] if items else ""
+
     intro = (
         f"Berdasarkan analisis data, risiko hipertensi Anda adalah "
-        f"{risk_score * 100:.1f}% yang termasuk dalam kategori {kategori}. "
-        f"Faktor utama yang berkontribusi terhadap risiko ini adalah {faktor_phrase}."
+        f"{risk_score * 100:.1f}% yang termasuk dalam kategori {kategori}."
     )
+    if naik:
+        intro += f" Faktor yang paling menaikkan risiko Anda adalah {gabung(naik)}."
+    if turun:
+        intro += f" Sebaliknya, faktor yang membantu menurunkan risiko Anda adalah {gabung(turun)}."
     
     # Prompt LLM yang sekarang jauh lebih cerdas dan situasional
     prompt_content = f"""
-Anda adalah dokter spesialis yang empatik. Tugas Anda HANYA menulis bagian SARAN KLINIS, melanjutkan narasi yang sudah ada.
+Anda adalah dokter spesialis yang empatik. Tugas Anda HANYA menulis bagian SARAN KLINIS singkat, melanjutkan narasi yang sudah ada.
 
 KONTEKS PASIEN:
 - Kategori risiko: {risk_status}
-- Faktor penyumbang terbesar (urut): {[NAME_MAP.get(k, k) for k, _ in ranked]}
+- Faktor yang BISA diubah & menaikkan risiko (PRIORITAS SARAN): {target_saran if target_saran else "tidak ada"}
+- Faktor yang TIDAK bisa diubah (hanya akui, jangan disuruh ubah): {faktor_tetap if faktor_tetap else "tidak ada"}
+- Faktor yang menurunkan risiko (boleh diapresiasi agar dipertahankan): {faktor_protektif if faktor_protektif else "tidak ada"}
 
-ATURAN:
+ATURAN WAJIB:
 1. Mulai TEPAT dengan kalimat: "Berdasarkan faktor tersebut, disarankan ...".
-2. Beri saran konkret yang relevan untuk faktor-faktor di atas, HANYA berdasarkan DOKUMEN REFERENSI.
-3. Jika "Low Risk", arahkan ke pencegahan; jika "High Risk", tegas namun empatik.
-4. Bahasa Indonesia natural, tanpa markdown (tanpa *, tanpa bullet, tanpa bold). Maksimal 2 kalimat.
-5. JANGAN menyebut ulang angka persentase atau skor risiko.
+2. Beri saran konkret HANYA untuk "Faktor yang BISA diubah & menaikkan risiko". JANGAN menyuruh pasien mengubah faktor yang tidak bisa diubah (usia, jenis kelamin, riwayat keluarga); cukup sebut sebagai hal yang perlu diwaspadai.
+3. Jika daftar faktor yang bisa diubah KOSONG, alihkan ke saran pencegahan umum sesuai DOKUMEN REFERENSI (pola makan, aktivitas fisik, kontrol tekanan darah rutin).
+4. Saran HANYA boleh bersumber dari DOKUMEN REFERENSI di bawah. Dilarang mengarang angka atau anjuran di luar dokumen.
+5. AKURASI MEDIS (PENTING): bila menyebut natrium/garam, gunakan kata "membatasi" atau "mengurangi" (contoh: "membatasi asupan natrium hingga kurang dari 2000 mg per hari"). DILARANG menulis "meningkatkan asupan natrium".
+6. Bahasa Indonesia natural, tanpa markdown (tanpa *, tanpa bullet, tanpa bold). Maksimal 2 kalimat. Jangan mengulang angka persentase atau skor risiko.
 
 DOKUMEN REFERENSI KEMENKES:
 {context_text}

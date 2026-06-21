@@ -91,7 +91,7 @@ def run_full_clinical_analysis(patient_data_dict: dict):
     # 4. EXPLAINABLE AI (SHAP) - DIDELEGASIKAN KE XAI SERVICE
     try:
         # Langsung panggil service yang sudah Anda buat dengan benar
-        top_features = get_top_risk_factors(patient_data_dict)
+        top_features = get_top_risk_factors(patient_data_dict, top_n=8)
     except Exception as e:
         print(f"XAI Error: {e}")
         top_features = {}
