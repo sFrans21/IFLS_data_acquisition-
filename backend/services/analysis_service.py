@@ -13,6 +13,7 @@ MODELS_DIR = os.path.join(BASE_DIR, "models", "saved_models")
 
 SCALER_PATH = os.path.join(MODELS_DIR, "standard_scaler.pkl")
 MODEL_PATH = os.path.join(MODELS_DIR, "xgboost_model.pkl") # Ganti logistic_regression.pkl kalau lu pakai itu
+RISK_THRESHOLD = 0.281
 
 try:
     scaler = joblib.load(SCALER_PATH)
@@ -72,7 +73,7 @@ def run_full_clinical_analysis(patient_data_dict: dict):
     # 1. PREDIKSI (MACHINE LEARNING) - Didelegasikan ke ML Service
     try:
         risk_score = predict_risk(patient_data_dict)
-        risk_status = "High Risk" if risk_score > 0.5 else "Low Risk"
+        risk_status = "High Risk" if risk_score >= RISK_THRESHOLD else "Low Risk"
     except Exception as e:
         raise ValueError(f"ML Prediction Error: {e}")
 
