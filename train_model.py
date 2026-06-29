@@ -31,11 +31,11 @@ y = df['label_hypertension']
 # LANGKAH PERBAIKAN: HANYA AMBIL KOLOM ANGKA
 # Ini akan membuang kolom teks seperti 'father_health' (AB, BCD) secara otomatis
 # -------------------------------------------------------------
-X = X.select_dtypes(include=[np.number])
+# X = X.select_dtypes(include=[np.number])     //////
 
 # Cek apakah masih ada missing value (NaN) yang lolos
 # Jika ada, isi dengan 0 (Safe Fallback)
-X = X.fillna(0)
+# X = X.fillna(0)  /////
 
 print(f"Fitur Input Final: {len(X.columns)} variabel")
 print(f"Daftar Fitur: {X.columns.tolist()}")
