@@ -85,6 +85,9 @@ def predict_risk(input_dict: dict) -> float:
     # A. Ubah input jadi DataFrame
     df_input = pd.DataFrame([input_dict])
 
+    print(type(model))
+    print(model)
+
     # B. Ambil nama kolom dari MODEL (sama seperti xai_service.py)
     training_features = model.feature_names_in_
 

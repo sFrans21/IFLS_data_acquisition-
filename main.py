@@ -701,6 +701,8 @@ import pandas as pd
 import pyreadstat
 import os
 import sys
+# import missingno as msno
+
 
 # --- KONFIGURASI SISTEM ---
 DATA_DIR = 'data'
@@ -745,14 +747,16 @@ def main():
     
     print("\n[2/7] Memproses Kebiasaan Merokok...")
     
-    # Merokok (Hanya mengekstrak KM01a)
+    # Merokok (Hanya mengekstrak km01a)
     df_smoke, _ = load_data('hh14_b3b_dta', 'b3b_km.dta')
     if df_smoke is not None:
         # Cek apakah kolom km01a ada di dataset
         if 'km01a' in df_smoke.columns:
             # Menggabungkan hanya pidlink dan km01a ke master_df
-            master_df = pd.merge(master_df, df_smoke[['pidlink', 'km01a']], on='pidlink', how='left')
-            print("   -> Gaya Hidup (Merokok - KM01a) merged.")
+            df_smoke_feat = (df_smoke[['pidlink', 'km01a']].rename(columns={'km01a': 'is_smoking'}))
+            master_df = pd.merge(master_df,df_smoke_feat,on='pidlink',how='left')
+            print("   -> Gaya Hidup (Merokok - km01a) merged.")
+        
         else:
             print("   -> [WARN] Kolom 'km01a' tidak ditemukan di dataset KM.")
 
@@ -778,6 +782,12 @@ def main():
             # Hasil akhir kolom: kk02o_A, kk02o_B, dan kk02o_C
             df_pivot.columns = [f"{val}_{col}" for val, col in df_pivot.columns]
             df_pivot = df_pivot.reset_index()
+
+            df_pivot = df_pivot.rename(columns={
+                'kk02o_A': 'freq_hard_act',
+                'kk02o_B': 'freq_moderate_act',
+                'kk02o_C': 'freq_walking'
+            })
             
             # Gabungkan ke master dataframe
             master_df = pd.merge(master_df, df_pivot, on='pidlink', how='left')
@@ -795,6 +805,7 @@ def main():
             # 1. Filter hanya untuk Diabetes (Kode 'B' atau 'b')
             target_cd = ['B', 'b']
             df_diabetes = df_cd3[df_cd3['cdtype'].isin(target_cd)]
+            df_chol = df_cd3[df_cd3['cdtype'].isin(['M', 'm'])]
             
             if not df_diabetes.empty:
                 # 2. Ambil kolom pidlink dan nilai cd05
@@ -812,8 +823,20 @@ def main():
                 print("   -> Kondisi Kronis (Diabetes - CD05) merged.")
             else:
                 print("   -> [WARN] Tidak ada responden dengan CDTYPE == B (Diabetes).")
+        
+            if not df_chol.empty:
+                df_chol = (df_chol[['pidlink', 'cd05']]
+                        .rename(columns={'cd05': 'is_high_cholesterol'})
+                        .groupby('pidlink')['is_high_cholesterol'].first().reset_index())
+                master_df = pd.merge(master_df, df_chol, on='pidlink', how='left')
+                print("   -> Kondisi Kronis (Kolesterol - CD05) merged.")
+            else:
+                print("   -> [WARN] Tidak ada responden dengan CDTYPE == M (Kolesterol).")
+
         else:
             print("   -> [WARN] Kolom 'cdtype' atau 'cd05' tidak ditemukan di dataset CD3.")
+
+
 
     
     # 4. DIET (Fast Food - FM2)
@@ -841,6 +864,20 @@ def main():
             print("   -> Diet (Fast Food fm03) merged.")
         else:
             print("   -> [WARN] Data Fast Food atau kolom fm03 tidak ditemukan di FM2.")
+            
+    # 4b. DIET TAMBAHAN (Soda & Gorengan - FM2, kolom fm03)
+    if df_fm2 is not None and 'fm03' in df_fm2.columns:
+        fm_targets = {'M': 'freq_soda', 'O': 'freq_fried_food'}
+        for kode, nama_fitur in fm_targets.items():
+            df_item = df_fm2[df_fm2['fmtype'].isin([kode, kode.lower()])]
+            if not df_item.empty:
+                df_item = (df_item[['pidlink', 'fm03']]
+                           .rename(columns={'fm03': nama_fitur})
+                           .groupby('pidlink')[nama_fitur].first().reset_index())
+                master_df = pd.merge(master_df, df_item, on='pidlink', how='left')
+                print(f"   -> Diet ({nama_fitur}) merged.")
+            else:
+                print(f"   -> [WARN] Tidak ada data fmtype={kode}.")
 
 
     # 5. PENGUKURAN FISIK (KOREKSI SCHEMA & HITUNG IMT)
@@ -863,18 +900,11 @@ def main():
         
         df_phys = df_us[existing_cols].rename(columns=rename_map)
         
-        # --- FEATURE ENGINEERING: IMT (BMI) ---
-        # Rumus: BB / (TB dalam meter)^2
-        # Kita gunakan .copy() untuk menghindari SettingWithCopyWarning
-        df_phys = df_phys.copy()
-        
-        # Validasi TB tidak nol untuk menghindari division by zero
-        mask_bmi = (df_phys['height_cm'] > 0) & (df_phys['weight_kg'] > 0)
-        df_phys.loc[mask_bmi, 'bmi'] = df_phys['weight_kg'] / ((df_phys['height_cm'] / 100) ** 2)
-        
-        df_phys = df_phys.drop_duplicates(subset='pidlink')
+
+        # Gabungkan ke master dataframe
         master_df = pd.merge(master_df, df_phys, on='pidlink', how='left')
-        print(f"   -> Fisik, Tensi, & IMT berhasil di-merge. Kolom: {list(df_phys.columns)}")
+
+        print(f"   -> Fisik & Tensi berhasil di-merge. Kolom: {list(df_phys.columns)}")
 
    
     # 6. KUALITAS TIDUR (Modul TDR)
@@ -893,22 +923,33 @@ def main():
             # Menggunakan list [2, '2'] untuk mengantisipasi format integer maupun string
             target_tdr = [2, '2']
             df_sleep = df_tdr[df_tdr['tdrtype'].isin(target_tdr)]
+            df_dist = df_tdr[df_tdr['tdrtype'].isin([1, '1'])]
             
             if not df_sleep.empty:
                 # Ambil kolom pidlink dan nilai tdr01
                 df_sleep_qual = df_sleep[['pidlink', 'tdr01']].copy()
                 
                 # Ubah nama kolom agar deskriptif di dataset akhir
-                df_sleep_qual = df_sleep_qual.rename(columns={'tdr01': 'kualitas_tidur'})
+                df_sleep_qual = df_sleep_qual.rename(columns={'tdr01': 'sleep_quality'})
                 
                 # Mengantisipasi duplikasi pidlink (ambil nilai pertama jika ada)
-                df_sleep_qual = df_sleep_qual.groupby('pidlink')['kualitas_tidur'].first().reset_index()
+                df_sleep_qual = df_sleep_qual.groupby('pidlink')['sleep_quality'].first().reset_index()
                 
                 # Gabungkan dengan master dataframe utama
                 master_df = pd.merge(master_df, df_sleep_qual, on='pidlink', how='left')
                 print("   -> Kualitas Tidur (TDRTYPE 2) merged.")
             else:
                 print("   -> [WARN] Tidak ada responden dengan TDRTYPE == 2.")
+        
+        
+            if not df_dist.empty:
+                df_dist = (df_dist[['pidlink', 'tdr01']]
+                        .rename(columns={'tdr01': 'sleep_disturbance'})
+                        .groupby('pidlink')['sleep_disturbance'].first().reset_index())
+                master_df = pd.merge(master_df, df_dist, on='pidlink', how='left')
+                print("   -> Gangguan Tidur (TDRTYPE 1) merged.")
+            else:
+                print("   -> [WARN] Tidak ada responden dengan TDRTYPE == 1.")
         else:
             print("   -> [WARN] Kolom 'tdrtype' atau 'tdr01' tidak ditemukan di dataset TDR.")
     
@@ -958,5 +999,7 @@ def main():
     master_df.to_csv('master_dataset_raw_final.csv', index=False)
     print("File master tersimpan: master_dataset_raw_final.csv")
 
+
+    # msno.matrix(master_df)
 if __name__ == "__main__":
     main()

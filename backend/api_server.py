@@ -65,7 +65,7 @@ async def analyze_patient(patient_data: PatientPayload):
         # Kalau ada error di dalam fungsi, langsung lempar HTTP 500
         raise HTTPException(status_code=500, detail=str(e))
 
-# Endpoint iseng buat ngecek server nyala atau nggak
+# Endpoint buat ngecek server nyala atau nggak
 @app.get("/", tags=["Health Check"])
 async def root():
-    return {"message": "Server CDSS Hipertensi Menyala, Sam!"}
+    return {"message": "Server CDSS Hipertensi Menyala!"}

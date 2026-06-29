@@ -31,7 +31,7 @@ print("--- MEMULAI DATA PREPARATION ---")
 df = pd.read_csv(PATH_DATA, low_memory=False)
 print(f"Populasi awal: {len(df)} responden, {df.shape[1]} kolom")
 
-# LANGKAH 1 — PENGHAPUSAN NILAI DUPLIKAT AKIBAT JOIN
+# LANGKAH 1 — PEMASTIAN TIDAK ADA NILAI DUPLIKAT AKIBAT JOIN
 
 # 1. Cari baris yang memiliki 'pidlink' kembar
 # keep=False artinya semua baris yang kembar akan ditandai dan diambil
