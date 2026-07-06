@@ -7,7 +7,7 @@
 # # 1. Tentukan Path ke file .pkl
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # # PASTIKAN INI MENGARAH KE MODEL XGBOOST LU, BUKAN LOGREG
-# MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_model.pkl") 
+# MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_hipertensi_model.pkl") 
 # SCALER_PATH = os.path.join(BASE_DIR, "models", "saved_models", "standard_scaler.pkl")
 
 # # 2. Load Model & Scaler ke Memory
@@ -75,19 +75,19 @@ import json
 
 # 1. Tentukan Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_model.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_hipertensi_model.pkl")
 IMPUTE_PATH = os.path.join(BASE_DIR, "models", "saved_models", "imputation_values.json")
 
-# 2. Load Model & JSON Imputasi (Scaler Dihapus!)
+# 2. Load Model & JSON Imputasi 
 try:
     model = joblib.load(MODEL_PATH)
     with open(IMPUTE_PATH, 'r') as f:
         imputation_values = json.load(f)
         
     explainer = shap.TreeExplainer(model)
-    print("✅ [XAI Service] SHAP TreeExplainer berhasil dimuat!")
+    print(" [XAI Service] SHAP TreeExplainer berhasil dimuat!")
 except Exception as e:
-    print(f"❌ [XAI Service] GAGAL memuat SHAP: {e}")
+    print(f"[XAI Service] GAGAL memuat SHAP: {e}")
     model = None
     explainer = None
     imputation_values = {}

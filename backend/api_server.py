@@ -29,19 +29,11 @@ class PatientPayload(BaseModel):
     age: float
     is_female: int
     bmi: float
-    waist_cm: float
     is_smoker: int
-    freq_instant_noodle: float
-    ak02: int
-    ak05: int
-    ak07: int
     has_diabetes: int
-    genetic_risk_score: float
-    ps_A: int
-    ps_B: int
-    ps_C: int
-    ps_E: int
-    ps_F: int
+    has_high_cholesterol: int
+    sleep_quality: float
+    sleep_disturbance: float
 
 # ==========================================
 # ENDPOINT UTAMA
@@ -49,7 +41,7 @@ class PatientPayload(BaseModel):
 @app.post("/api/v1/analyze", tags=["Clinical Analysis"])
 async def analyze_patient(patient_data: PatientPayload):
     """
-    Endpoint ini menerima 16 fitur pasien dari Frontend, 
+    Endpoint menerima 8 fitur pasien dari Frontend,
     lalu menjalankan Prediksi ML, Analisis SHAP, dan Narasi Groq LLM.
     """
     try:

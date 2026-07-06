@@ -321,23 +321,16 @@ sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFuncti
 # ==========================================
 # 1. MODUL QUERY TRANSFORMER
 # ==========================================
+# Query RAG per fitur — HANYA 8 fitur yang benar-benar dipakai model saat ini.
 FEATURE_MAP = {
     'age': 'risiko kardiovaskular pada lansia, penuaan pembuluh darah, target tensi lansia',
     'is_female': 'risiko hipertensi pada wanita, menopause, hormon',
     'bmi': 'indeks massa tubuh, obesitas, target berat badan ideal',
-    'waist_cm': 'obesitas sentral, lingkar pinggang, penumpukan lemak perut',
     'is_smoker': 'bahaya merokok, nikotin, kerusakan pembuluh darah',
-    'freq_instant_noodle': 'diet rendah natrium, batasan konsumsi garam, mi instan',
-    'has_diabetes': 'komplikasi diabetes dan hipertensi',
-    'genetic_risk_score': 'riwayat hipertensi keluarga, faktor keturunan genetik',
-    'ak02': 'aktivitas fisik kurang, olahraga untuk penderita hipertensi',
-    'ak05': 'kualitas tidur buruk, istirahat kurang',
-    'ak07': 'konsumsi alkohol, pola hidup tidak sehat',
-    'ps_A': 'stres psikososial, manajemen stres, pikiran',
-    'ps_B': 'stres emosional, kecemasan',
-    'ps_C': 'gejala depresi, pengaruh pikiran negatif',
-    'ps_E': 'gangguan tidur karena stres, insomnia',
-    'ps_F': 'rasa kesepian, butuh dukungan sosial'
+    'has_diabetes': 'komplikasi diabetes dan hipertensi, target tensi ketat',
+    'has_high_cholesterol': 'kolesterol tinggi, dislipidemia, plak dan penyempitan pembuluh darah, aterosklerosis',
+    'sleep_quality': 'kualitas tidur buruk dan hipertensi, istirahat tidak berkualitas, tekanan darah',
+    'sleep_disturbance': 'gangguan tidur, sulit tidur atau sering terbangun, insomnia dan tekanan darah',
 }
 
 # Nama tampilan tiap faktor untuk narasi ke pasien (selaras dengan label di frontend).
@@ -345,19 +338,11 @@ NAME_MAP = {
     'age': 'usia',
     'is_female': 'jenis kelamin',
     'bmi': 'indeks massa tubuh (BMI)',
-    'waist_cm': 'lingkar pinggang',
     'is_smoker': 'kebiasaan merokok',
-    'freq_instant_noodle': 'konsumsi mi instan',
-    'ak02': 'kurangnya aktivitas fisik berat',
-    'ak05': 'kurangnya aktivitas fisik sedang',
-    'ak07': 'durasi aktivitas fisik',
     'has_diabetes': 'riwayat diabetes',
-    'genetic_risk_score': 'riwayat hipertensi keluarga',
-    'ps_A': 'mudah merasa terganggu',
-    'ps_B': 'kesulitan berkonsentrasi',
-    'ps_C': 'perasaan sedih atau murung',
-    'ps_E': 'tingkat optimisme',
-    'ps_F': 'rasa cemas',
+    'has_high_cholesterol': 'riwayat kolesterol tinggi',
+    'sleep_quality': 'kualitas tidur',
+    'sleep_disturbance': 'gangguan tidur',
 }
 
 def transform_query(top_shap_features: dict) -> str:
@@ -397,7 +382,7 @@ def generate_clinical_narrative(patient_profile: dict, top_shap_features: dict, 
         context_text = "Gagal mengambil dokumen referensi."
 
 # --- Klasifikasi faktor: arah (tanda SHAP) + bisa/tidak bisa diubah ---
-    NON_MODIFIABLE = {"age", "is_female", "genetic_risk_score"}
+    NON_MODIFIABLE = {"age", "is_female"}
 
     total_impact = sum(abs(v) for v in top_shap_features.values())
     ranked = sorted(top_shap_features.items(), key=lambda kv: abs(kv[1]), reverse=True)

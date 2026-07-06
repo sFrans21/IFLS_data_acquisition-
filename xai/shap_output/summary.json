@@ -1,0 +1,104 @@
+{
+  "n_samples": 32541,
+  "feature_names": [
+    "age",
+    "is_female",
+    "bmi",
+    "is_smoker",
+    "has_diabetes",
+    "has_high_cholesterol",
+    "sleep_quality",
+    "sleep_disturbance"
+  ],
+  "tree_time_s": 0.320364,
+  "global_mean_abs_shap": {
+    "age": 0.8770983815193176,
+    "is_female": 0.17578409612178802,
+    "bmi": 0.45755887031555176,
+    "is_smoker": 0.016056299209594727,
+    "has_diabetes": 0.007836496457457542,
+    "has_high_cholesterol": 0.009445363655686378,
+    "sleep_quality": 0.025898680090904236,
+    "sleep_disturbance": 0.021799778565764427
+  },
+  "local_index": 0,
+  "base_value_logodds": -5.432729085441679e-5,
+  "fx_logodds": 1.2870617234293604,
+  "base_value_prob": 0.4999864181772898,
+  "fx_prob": 0.7836494401695846,
+  "local_shap_logodds": {
+    "age": 1.0805035829544067,
+    "is_female": 0.0902947261929512,
+    "bmi": 0.20084741711616516,
+    "is_smoker": -0.014413549564778805,
+    "has_diabetes": -0.005247561726719141,
+    "has_high_cholesterol": -0.010129934176802635,
+    "sleep_quality": -0.07206793129444122,
+    "sleep_disturbance": 0.017329242080450058
+  },
+  "analisis_ambang_batas_semua_fitur": {
+    "age": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "est_titik_netral_mean": 42.29,
+      "rentang_zona_netral": [39.0, 45.0]
+    },
+    "is_female": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.1737,
+        "1.0": -0.1754,
+        "nan": "NaN"
+      }
+    },
+    "bmi": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "est_titik_netral_mean": 23.17,
+      "rentang_zona_netral": [22.03, 23.99]
+    },
+    "is_smoker": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0118,
+        "1.0": -0.0226,
+        "nan": "NaN"
+      }
+    },
+    "has_diabetes": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0035,
+        "1.0": 0.1731,
+        "nan": "NaN"
+      }
+    },
+    "has_high_cholesterol": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0054,
+        "1.0": 0.0999,
+        "nan": "NaN"
+      }
+    },
+    "sleep_quality": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "est_titik_netral_mean": 3.43,
+      "rentang_zona_netral": [1.0, 5.0]
+    },
+    "sleep_disturbance": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "est_titik_netral_mean": 1.31,
+      "rentang_zona_netral": [1.0, 5.0]
+    }
+  },
+  "explainer_comparison": {
+    "compare_n": 50,
+    "tree_time_s": 0.059089,
+    "kernel_time_s": 0.841949,
+    "mean_abs_diff_shap_prob": 0.0014455574011632822,
+    "mean_contrib_diff_pct": 0.43833152037161094
+  }
+}

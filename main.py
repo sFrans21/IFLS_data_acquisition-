@@ -701,6 +701,7 @@ import pandas as pd
 import pyreadstat
 import os
 import sys
+import numpy as np
 # import missingno as msno
 
 
@@ -740,25 +741,51 @@ def main():
     df_demo = df_cov[['pidlink', 'sex', 'age']]
     master_df = pd.merge(df_ptrack[['pidlink']], df_demo, on='pidlink', how='right')
     print(f"   -> Populasi: {len(master_df)} responden.")
-
-    
+    master_df['age'] = master_df['age'].replace([997, 998, 999], np.nan)    
+        # Jalankan ini untuk tes sampling umur di data CD3
+    df_test_cd3, _ = load_data('hh14_b3b_dta', 'b3b_cd3.dta')
+    if df_test_cd3 is not None:
+        # Merge sementara dengan master_df yang sudah punya kolom 'age'
+        df_cek = pd.merge(master_df[['pidlink', 'age']], df_test_cd3[['pidlink']].drop_duplicates(), on='pidlink', how='inner')
+        print("--- DISTRIBUSI UMUR DI B3B_CD3 ---")
+        print(df_cek['age'].describe())
 
     # 2. GAYA HIDUP (Merokok & Aktivitas Fisik)
     
     print("\n[2/7] Memproses Kebiasaan Merokok...")
     
     # Merokok (Hanya mengekstrak km01a)
+
     df_smoke, _ = load_data('hh14_b3b_dta', 'b3b_km.dta')
+
     if df_smoke is not None:
-        # Cek apakah kolom km01a ada di dataset
-        if 'km01a' in df_smoke.columns:
-            # Menggabungkan hanya pidlink dan km01a ke master_df
-            df_smoke_feat = (df_smoke[['pidlink', 'km01a']].rename(columns={'km01a': 'is_smoking'}))
-            master_df = pd.merge(master_df,df_smoke_feat,on='pidlink',how='left')
-            print("   -> Gaya Hidup (Merokok - km01a) merged.")
-        
+
+        required_cols = ['pidlink', 'km01a']
+
+        missing_cols = [c for c in required_cols if c not in df_smoke.columns]
+
+        if missing_cols:
+            print(f"   -> [WARN] Kolom tidak ditemukan: {missing_cols}")
         else:
-            print("   -> [WARN] Kolom 'km01a' tidak ditemukan di dataset KM.")
+
+            df_smoke_feat = (
+                df_smoke[required_cols]
+                .rename(columns={
+                    'km01a': 'is_smoking'
+                })
+                .groupby('pidlink')
+                .first()
+                .reset_index()
+            )
+
+            master_df = pd.merge(
+                master_df,
+                df_smoke_feat,
+                on='pidlink',
+                how='left'
+            )
+
+            print("   -> Variabel KM merged.")
 
 
     print("\n[3/7] Memproses Aktivitas Fisik...")
@@ -998,6 +1025,7 @@ def main():
     print(f"Dimensi Akhir Master (Belum Dihapus): {master_df.shape}")
     master_df.to_csv('master_dataset_raw_final.csv', index=False)
     print("File master tersimpan: master_dataset_raw_final.csv")
+    cols = ['km08', 'km10', 'km05aa']
 
 
     # msno.matrix(master_df)

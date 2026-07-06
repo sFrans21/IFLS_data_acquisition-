@@ -51,10 +51,13 @@ def siapkan_data(path):
     df.loc[df["age"] > 120, "age"] = np.nan                                       # 998 = tidak tahu
     df["is_diabetes"]   = df["is_diabetes"].where(~df["is_diabetes"].isin([8, 9]))      # 8/9 -> NaN
     df["is_high_cholesterol"]   = df["is_high_cholesterol"].where(~df["is_high_cholesterol"].isin([8, 9]))      # 8/9 -> NaN
-    df["sleep_quality"] = df["sleep_quality"].where(~df["sleep_quality"].isin([8, 9]))  # 9 -> NaN
+    df["sleep_quality"] = df["sleep_quality"].where(~df["sleep_quality"].isin([8, 9]))  # 8/9 -> NaN
+    df["sleep_disturbance"] = df["sleep_disturbance"].where(~df["sleep_disturbance"].isin([8, 9]))  # 8/9 -> NaN
+
 
 #     --- (2) BMI dihitung sendiri (tidak ada di dataset baru) ---
     df["bmi"] = df["weight_kg"] / (df["height_cm"] / 100) ** 2
+
 
     # --- (3) Koreksi tekanan darah mustahil SEBELUM membuat label ---
     bad_bp = (
@@ -71,15 +74,15 @@ def siapkan_data(path):
 
     # --- (5) Fitur biner untuk analisis bivariat (kode IFLS 1/3 -> 1/0) ---
     df["is_female"] = df["sex"].map({1.0: 0, 3.0: 1})            # 3 = perempuan
-    df["smoker"]    = df["is_smoking"].map({1.0: 1, 3.0: 0})     # 1 = ya  (kolom asli MASIH 1/3!)
+    df["is_smoker"]    = df["is_smoking"].map({1.0: 1, 3.0: 0})     # 1 = ya  (kolom asli MASIH 1/3!)
     df["diabetes"]  = df["is_diabetes"].map({1.0: 1, 3.0: 0})    # 1 = ya
     df["is_high_cholesterol"]  = df["is_high_cholesterol"].map({1.0: 1, 3.0: 0})
 
     # --- (6) Pengelompokan untuk analisis bivariat ---
     df["kel_umur"] = pd.cut(df["age"], [0, 30, 40, 50, 60, 70, 200],
                             labels=["<30", "30-39", "40-49", "50-59", "60-69", "70+"])
-    df["kat_bmi"] = pd.cut(df["bmi"], [0, 18.5, 25, 30, 100],
-                           labels=["Kurus", "Normal", "Gemuk", "Obesitas"])
+    df["kat_bmi"] = pd.cut(df["bmi"], [0, 18.5, 24.9, 30, 100],
+                           labels=["Underweight", "Normal", "Overweight", "Obesitas"])
     return df
 
 
@@ -92,9 +95,45 @@ def bagian_A(path):
     print("Dimensi (baris, kolom):", raw.shape)
     print("pidlink unik          :", raw["pidlink"].nunique(), "dari", len(raw))
     print("Baris duplikat penuh  :", raw.duplicated().sum())
-    print("\nPersentase nilai hilang per kolom:")
-    print((raw.isna().mean()*100).round(1).sort_values(ascending=False).to_string())
+    # print("\nPersentase nilai hilang per kolom:")
+    # print((raw.isna().mean()*100).round(1).sort_values(ascending=False).to_string())
 
+    # =========================
+    # Missing Value Report
+    # =========================
+    missing = (raw.isna().mean() * 100).round(2).sort_values(ascending=False)
+
+    print("\nPersentase nilai hilang per kolom:")
+    print(missing.to_string())
+
+    # =========================
+    # Missing Value Plot
+    # =========================
+    plt.figure(figsize=(10,5))
+
+    bars = plt.bar(
+        missing.index,
+        missing.values,
+        color="steelblue"
+    )
+
+    for bar, val in zip(bars, missing.values):
+        plt.text(
+            bar.get_x() + bar.get_width()/2,
+            val,
+            f"{val:.1f}%",
+            ha="center",
+            va="bottom",
+            fontsize=8
+        )
+
+    plt.title("Persentase Missing Value per Fitur")
+    plt.xlabel("Fitur")
+    plt.ylabel("Missing Value (%)")
+    plt.xticks(rotation=45, ha="right")
+    plt.ylim(0, max(missing.max()*1.15, 5))
+
+    simpan("missing_values.png")
 
 # ===========================================================================
 # B. TARGET HIPERTENSI -> Gambar g1..g4
@@ -159,7 +198,7 @@ def bagian_D(df):
 
     # Korelasi point-biserial fitur numerik/ordinal dengan target
     print("Korelasi point-biserial dengan hipertensi:")
-    kand = ["age", "bmi", "waist_cm", "sleep_quality",
+    kand = ["age", "bmi", "waist_cm", "sleep_quality", "sleep_disturbance",
             "freq_walking", "freq_moderate_act", "freq_hard_act", "freq_fast_food", "freq_soda", "freq_fried_food"]
     for c in kand:
         if c in df.columns:
@@ -191,7 +230,7 @@ def bagian_D(df):
     plt.ylim(0, gb.max()*1.15); simpan("g7_bmi.png")
 
     # g8: faktor biner Ya vs Tidak
-    feats = [("diabetes", "Diabetes"), ("smoker", "Perokok"), ("is_female", "Perempuan"), ("is_high_cholesterol", "Kolesterol")]
+    feats = [("diabetes", "Diabetes"), ("is_smoker", "Perokok"), ("is_female", "Apakah Perempuan"), ("is_high_cholesterol", "Kolesterol")]
     ya  = [df[df[c] == 1]["hipertensi"].mean()*100 for c, _ in feats]
     tdk = [df[df[c] == 0]["hipertensi"].mean()*100 for c, _ in feats]
     print("\nTingkat hipertensi menurut faktor biner (Ya vs Tidak):")

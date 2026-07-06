@@ -1,33 +1,8 @@
-import os
-import joblib
-import pandas as pd
-import shap # Pastikan lu udah pip install shap
 from backend.services.ml_service import predict_risk
 from backend.services.llm_service import generate_clinical_narrative
 from backend.services.xai_service import get_top_risk_factors
-# ==========================================
-# 1. LOAD MODEL & SCALER (Saat Server Menyala)
-# ==========================================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODELS_DIR = os.path.join(BASE_DIR, "models", "saved_models")
 
-SCALER_PATH = os.path.join(MODELS_DIR, "standard_scaler.pkl")
-MODEL_PATH = os.path.join(MODELS_DIR, "xgboost_model.pkl") # Ganti logistic_regression.pkl kalau lu pakai itu
-RISK_THRESHOLD = 0.281
-
-try:
-    scaler = joblib.load(SCALER_PATH)
-    model = joblib.load(MODEL_PATH)
-    print(" Model & Scaler berhasil dimuat!")
-except Exception as e:
-    print(f" Gagal memuat model: {e}")
-
-# Inisialisasi XAI (SHAP) on-the-fly
-# Catatan: TreeExplainer untuk XGBoost. Jika pakai Logistic Regression, gunakan shap.LinearExplainer
-try:
-    explainer = shap.TreeExplainer(model) 
-except:
-    explainer = None
+RISK_THRESHOLD = 0.5
 
 # ==========================================
 # 2. FUNGSI ORKESTRATOR (PIPA INTEGRASI)
@@ -120,21 +95,13 @@ if __name__ == "__main__":
     # Ini simulasi JSON payload yang akan dikirim dari React/Frontend lu nanti
     mock_patient_payload = {
         "age": 45,
-        "is_female": 0,          # 0 = Laki-laki, 1 = Perempuan
+        "is_female": 0,
         "bmi": 28.5,
-        "waist_cm": 95,
         "is_smoker": 1,
-        "freq_instant_noodle": 5,
-        "ak02": 1,               # Angka dummy untuk testing
-        "ak05": 0,
-        "ak07": 0,               # Angka dummy untuk testing
         "has_diabetes": 0,
-        "genetic_risk_score": 1.2, # Angka dummy untuk testing
-        "ps_A": 0,               # Angka dummy untuk testing
-        "ps_B": 1,               # Angka dummy untuk testing
-        "ps_C": 0,               # Angka dummy untuk testing
-        "ps_E": 0,               # Angka dummy untuk testing
-        "ps_F": 1                # Angka dummy untuk testing
+        "has_high_cholesterol": 1,
+        "sleep_quality": 2.0,
+        "sleep_disturbance": 1
     }
     
     print("\n--- MENJALANKAN INTEGRASI FULL BACKEND ---")

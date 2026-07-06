@@ -5,7 +5,7 @@
 # # 1. Tentukan Path ke file .pkl
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # # MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "logistic_regression_model.pkl")
-# MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_model.pkl")
+# MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_hipertensi_model.pkl")
 
 # SCALER_PATH = os.path.join(BASE_DIR, "models", "saved_models", "standard_scaler.pkl")
 
@@ -64,7 +64,7 @@ import pandas as pd
 
 # 1. Tentukan Path (SAMA seperti di xai_service.py)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_model.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "saved_models", "xgboost_hipertensi_model.pkl")
 IMPUTE_PATH = os.path.join(BASE_DIR, "models", "saved_models", "imputation_values.json")
 
 # 2. Load Model & nilai imputasi (TANPA scaler)
@@ -84,9 +84,6 @@ def predict_risk(input_dict: dict) -> float:
 
     # A. Ubah input jadi DataFrame
     df_input = pd.DataFrame([input_dict])
-
-    print(type(model))
-    print(model)
 
     # B. Ambil nama kolom dari MODEL (sama seperti xai_service.py)
     training_features = model.feature_names_in_
