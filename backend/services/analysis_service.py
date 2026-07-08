@@ -1,6 +1,7 @@
 from backend.services.ml_service import predict_risk
 from backend.services.llm_service import generate_clinical_narrative
 from backend.services.xai_service import get_top_risk_factors
+from backend.services.ml_service import threshold
 
 RISK_THRESHOLD = 0.5
 
@@ -48,7 +49,7 @@ def run_full_clinical_analysis(patient_data_dict: dict):
     # 1. PREDIKSI (MACHINE LEARNING) - Didelegasikan ke ML Service
     try:
         risk_score = predict_risk(patient_data_dict)
-        risk_status = "High Risk" if risk_score >= RISK_THRESHOLD else "Low Risk"
+        risk_status = ("High Risk" if risk_score >= threshold else "Low Risk")
     except Exception as e:
         raise ValueError(f"ML Prediction Error: {e}")
 

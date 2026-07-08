@@ -33,8 +33,18 @@ RANDOM_STATE = 42
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# ---------- 1. Muat model & data ----------
 with open(MODEL_PATH, "rb") as f:
-    model = pickle.load(f)
+    loaded_data = pickle.load(f)
+        
+# Cek apakah yang dimuat adalah dictionary
+if isinstance(loaded_data, dict):
+    print(f"Isi dictionary: {loaded_data.keys()}")
+    # GANTI 'model' dengan key yang tepat berdasarkan output print di atas.
+    # Biasanya key-nya bernama 'model', 'xgb_model', atau 'classifier'
+    model = loaded_data.get('model', loaded_data) 
+else:
+    model = loaded_data
 
 df = pd.read_csv(DATASET_PATH)
 X = df.drop(columns=[TARGET_COL])

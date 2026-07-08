@@ -80,7 +80,12 @@ IMPUTE_PATH = os.path.join(BASE_DIR, "models", "saved_models", "imputation_value
 
 # 2. Load Model & JSON Imputasi 
 try:
-    model = joblib.load(MODEL_PATH)
+    artifact = joblib.load(MODEL_PATH)
+
+    model = artifact["model"]
+    threshold = artifact["threshold"]
+    training_features = artifact["feature_names"]
+    
     with open(IMPUTE_PATH, 'r') as f:
         imputation_values = json.load(f)
         
@@ -99,7 +104,7 @@ def get_top_risk_factors(input_dict: dict, top_n: int = 3) -> dict:
 
     # A. Preprocessing input
     df_input = pd.DataFrame([input_dict])
-    training_features = model.feature_names_in_ # Ambil nama kolom dari model langsung
+
     
     # B. Imputasi Pintar (Menggunakan Median dari JSON, bukan 0.0)
     for col in training_features:

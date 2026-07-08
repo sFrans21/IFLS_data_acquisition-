@@ -69,7 +69,12 @@ IMPUTE_PATH = os.path.join(BASE_DIR, "models", "saved_models", "imputation_value
 
 # 2. Load Model & nilai imputasi (TANPA scaler)
 try:
-    model = joblib.load(MODEL_PATH)
+    artifact = joblib.load(MODEL_PATH)
+
+    model = artifact["model"]
+    threshold = artifact["threshold"]
+    training_features = artifact["feature_names"]
+    
     with open(IMPUTE_PATH, "r") as f:
         imputation_values = json.load(f)
     print("[ML Service] Model XGBoost & imputasi berhasil dimuat!")
@@ -86,7 +91,6 @@ def predict_risk(input_dict: dict) -> float:
     df_input = pd.DataFrame([input_dict])
 
     # B. Ambil nama kolom dari MODEL (sama seperti xai_service.py)
-    training_features = model.feature_names_in_
 
     # C. Isi kolom kosong dengan MEDIAN (bukan 0.0) — sama seperti xai_service.py
     for col in training_features:

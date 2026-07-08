@@ -255,7 +255,18 @@ def bagian_D(df):
         plt.text(bar.get_x()+bar.get_width()/2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=9)
     plt.title("Tingkat Hipertensi per Skor Kualitas Tidur")
     plt.ylabel("% hipertensi"); plt.xlabel("Skor kualitas tidur")
-    plt.ylim(0, gs.max()*1.15); simpan("g9_sleep.png")
+    plt.ylim(0, gs.max()*1.15); simpan("g9_sleep_quality.png")
+    
+        # g10: per tingkat gangguan tidur (FITUR BARU)
+    gs = df.dropna(subset=["sleep_disturbance"]).groupby("sleep_disturbance", observed=True)["hipertensi"].mean()*100
+    print("\nTingkat hipertensi per Frekuensi gangguan tidur (%):\n" + gs.round(1).to_string())
+    plt.figure(figsize=(7, 4.5))
+    b = plt.bar(gs.index.astype(int).astype(str), gs.values, color=plt.cm.Purples(np.linspace(.4, .9, len(gs))))
+    for bar, v in zip(b, gs.values):
+        plt.text(bar.get_x()+bar.get_width()/2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=9)
+    plt.title("Tingkat Hipertensi per Frekuensi Gangguan Tidur")
+    plt.ylabel("% hipertensi"); plt.xlabel("Frekuensi gangguan tidur")
+    plt.ylim(0, gs.max()*1.15); simpan("g10_sleep_frequency.png")
 
 
 def main():
@@ -266,7 +277,7 @@ def main():
     bagian_C(df)
     bagian_D(df)
     garis("EDA SELESAI")
-    print("9 grafik dihasilkan: g1_target_balance.png ... g9_sleep.png")
+    print("9 grafik dihasilkan: g1_target_balance.png ... g10_sleep_frequency.png")
 
 
 if __name__ == "__main__":
