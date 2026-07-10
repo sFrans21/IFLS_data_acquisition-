@@ -237,7 +237,7 @@ ini hanya menghasilkan dataset bersih sebelum imputasi.
 
 import pandas as pd
 import numpy as np
-import json
+
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 
@@ -246,18 +246,9 @@ PATH_DATA = "master_dataset_raw_final.csv"   # sesuaikan lokasi berkas Anda
 def garis(t):
     print("\n" + "=" * 70 + f"\n{t}\n" + "=" * 70)
 
-# ===========================================================================
-# INISIALISASI DICTIONARY UNTUK LOG JSON
-# ===========================================================================
-laporan_log = {}
-
 print("--- MEMULAI DATA PREPARATION ---")
 df = pd.read_csv(PATH_DATA, low_memory=False)
 print(f"Populasi awal: {len(df)} responden, {df.shape[1]} kolom")
-laporan_log["metadata_awal"] = {
-    "jumlah_responden_awal": len(df),
-    "jumlah_kolom_awal": df.shape[1]
-}
 
 # ===========================================================================
 # LANGKAH 0 — PEMERIKSAAN DUPLIKAT pidlink
@@ -265,12 +256,6 @@ laporan_log["metadata_awal"] = {
 garis("LANGKAH 0: Pemeriksaan duplikat pidlink")
 dup = df[df.duplicated(subset="pidlink", keep=False)]
 print(f"  Ditemukan {len(dup)} baris duplikat dari {dup['pidlink'].nunique()} pidlink unik.")
-
-laporan_log["langkah_0_duplikat"] = {
-    "baris_duplikat": int(len(dup)),
-    "pidlink_unik_terduplikasi": int(dup['pidlink'].nunique())
-}
-
 if len(dup) > 0:
     dup.sort_values("pidlink").to_csv("evaluasi_duplikat_pidlink.csv", index=False)
     print("  Disimpan ke evaluasi_duplikat_pidlink.csv untuk evaluasi manual.")
