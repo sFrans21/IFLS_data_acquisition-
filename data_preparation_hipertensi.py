@@ -237,6 +237,7 @@ ini hanya menghasilkan dataset bersih sebelum imputasi.
 
 import pandas as pd
 import numpy as np
+import json
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 
@@ -245,9 +246,18 @@ PATH_DATA = "master_dataset_raw_final.csv"   # sesuaikan lokasi berkas Anda
 def garis(t):
     print("\n" + "=" * 70 + f"\n{t}\n" + "=" * 70)
 
+# ===========================================================================
+# INISIALISASI DICTIONARY UNTUK LOG JSON
+# ===========================================================================
+laporan_log = {}
+
 print("--- MEMULAI DATA PREPARATION ---")
 df = pd.read_csv(PATH_DATA, low_memory=False)
 print(f"Populasi awal: {len(df)} responden, {df.shape[1]} kolom")
+laporan_log["metadata_awal"] = {
+    "jumlah_responden_awal": len(df),
+    "jumlah_kolom_awal": df.shape[1]
+}
 
 # ===========================================================================
 # LANGKAH 0 — PEMERIKSAAN DUPLIKAT pidlink
@@ -255,6 +265,12 @@ print(f"Populasi awal: {len(df)} responden, {df.shape[1]} kolom")
 garis("LANGKAH 0: Pemeriksaan duplikat pidlink")
 dup = df[df.duplicated(subset="pidlink", keep=False)]
 print(f"  Ditemukan {len(dup)} baris duplikat dari {dup['pidlink'].nunique()} pidlink unik.")
+
+laporan_log["langkah_0_duplikat"] = {
+    "baris_duplikat": int(len(dup)),
+    "pidlink_unik_terduplikasi": int(dup['pidlink'].nunique())
+}
+
 if len(dup) > 0:
     dup.sort_values("pidlink").to_csv("evaluasi_duplikat_pidlink.csv", index=False)
     print("  Disimpan ke evaluasi_duplikat_pidlink.csv untuk evaluasi manual.")
@@ -457,6 +473,23 @@ df_model.to_csv("dataset_hipertensi_prepared.csv", index=False)
 print("  Tersimpan: dataset_hipertensi_prepared.csv (fitur+target, sebelum imputasi)")
 print(f"  Sisa nilai kosong per fitur:\n{df_model[FITUR].isna().sum().to_string()}")
 
+garis("DISTRIBUSI KELAS TARGET")
+
+# Jumlah data
+total_data = len(df_model)
+
+# Jumlah masing-masing kelas
+jumlah_positif = (df_model["label_hypertension"] == 1).sum()
+jumlah_negatif = (df_model["label_hypertension"] == 0).sum()
+
+# Persentase
+persen_positif = (jumlah_positif / total_data) * 100
+persen_negatif = (jumlah_negatif / total_data) * 100
+
+# Output
+print(f"Jumlah data keseluruhan              : {total_data:,}")
+print(f"Kelas Positif Hipertensi (1)         : {jumlah_positif:,} ({persen_positif:.2f}%)")
+print(f"Kelas Negatif Non-hipertensi (0)     : {jumlah_negatif:,} ({persen_negatif:.2f}%)")
 
 # ===========================================================================
 # INFORMASI DATA TRAIN & TEST

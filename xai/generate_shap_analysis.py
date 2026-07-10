@@ -31,7 +31,7 @@ import shap
 
 # ===================== KONFIGURASI =====================
 MODEL_PATH   = "xgboost_hipertensi_model.pkl"      # path model terlatih Anda
-DATASET_PATH = "dataset_hipertensi_prepared.csv"   # path dataset siap-pakai
+DATASET_PATH = "dataset_hipertensi_imputed.csv"   # path dataset siap-pakai
 TARGET_COL   = "label_hypertension"                # kolom target (dibuang dari fitur)
 OUTPUT_DIR   = "shap_output"                        # folder keluaran
 LOCAL_INDEX  = 0                                    # indeks sampel untuk analisis lokal

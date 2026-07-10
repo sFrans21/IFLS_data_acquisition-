@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import shap
 
 MODEL_PATH   = "xgboost_hipertensi_model.pkl"
-DATASET_PATH = "dataset_hipertensi_prepared.csv"
+DATASET_PATH = "dataset_hipertensi_imputed.csv"
 TARGET_COL   = "label_hypertension"
 OUTPUT_DIR   = "shap_output"
 LOCAL_INDEX  = 0          # samakan dengan analisis lokal di skrip utama
