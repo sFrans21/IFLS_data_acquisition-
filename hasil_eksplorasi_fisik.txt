@@ -1,0 +1,6 @@
+Hasil Eksplorasi Variabel untuk file: data/hh14_b3b_dta/b3b_kk2.dta
+============================================================
+
+Kode Variabel : kktype
+Label         : TYPE OF PHYSICAL ACTIVITIES
+------------------------------------------------------------

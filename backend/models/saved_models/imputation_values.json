@@ -1,0 +1,10 @@
+{
+    "age": 40.0,
+    "is_female": 0,
+    "bmi": 23.0,
+    "is_smoker": 0,
+    "has_diabetes": 0,
+    "has_high_cholesterol": 0,
+    "sleep_quality": 3.0,
+    "sleep_disturbance": 0
+}
