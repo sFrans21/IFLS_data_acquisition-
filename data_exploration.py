@@ -2,9 +2,11 @@
 ============================================================================
 SCRIPT EKSPLORASI DATA AWAL (EDA) — VERSI HIPERTENSI  [DATASET BARU 15 KOLOM]
 Disesuaikan dengan skema hasil akuisisi ulang:
-  pidlink, sex, age, is_smoking, freq_hard_act, freq_moderate_act,
-  freq_walking, is_diabetes, freq_fast_food, weight_kg, height_cm,
-  waist_cm, bp_systolic, bp_diastolic, sleep_quality
+  pidlink, sex, age, has_tobacco, freq_hard_act, freq_moderate_act,
+  freq_walking, is_diabetes, weight_kg, height_cm,
+  , bp_systolic, bp_diastolic
+
+'pidlink', 'sex', 'age', 'has_tobacco', 'hard_act_last7d', 'moderate_act_last7d', 'walking_last7d', 'is_diabetes', 'is_high_cholesterol', 'is_kidney_disease', 'is_stroke', 'has_noodles', 'fm03_x', 'has_fast_food', 'fm03_y', 'has_fried_food', 'fm03', 'weight_kg', 'height_cm', '', 'bp_systolic', 'bp_diastolic'
 
 Target  : hipertensi (diturunkan dari tekanan darah, JNC-7/WHO)
 Catatan : kolom bmi TIDAK ada di dataset -> dihitung sendiri.
@@ -18,6 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
+import textwrap
 
 sns.set_style("whitegrid")
 pd.set_option("display.max_columns", None)
@@ -44,27 +47,35 @@ def siapkan_data(path):
     print(f"Populasi awal: {len(df)} responden, {df.shape[1]} kolom")
 
     # --- Numerikkan kolom (jaga-jaga terbaca sebagai teks) ---
-    for c in ["age", "weight_kg", "height_cm", "waist_cm", "bp_systolic", "bp_diastolic"]:
+    for c in ["age", "weight_kg", "height_cm", "bp_systolic", "bp_diastolic"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
 #     # --- (1) Pembersihan kode tersamar -> NaN ---
-    df.loc[df["age"] > 120, "age"] = np.nan                                       # 998 = tidak tahu
+    df.loc[df["age"] > 150, "age"] = np.nan                                       # 998 = tidak tahu
     df["is_diabetes"]   = df["is_diabetes"].where(~df["is_diabetes"].isin([8, 9]))      # 8/9 -> NaN
     df["is_high_cholesterol"]   = df["is_high_cholesterol"].where(~df["is_high_cholesterol"].isin([8, 9]))      # 8/9 -> NaN
-    df["sleep_quality"] = df["sleep_quality"].where(~df["sleep_quality"].isin([8, 9]))  # 8/9 -> NaN
-    df["sleep_disturbance"] = df["sleep_disturbance"].where(~df["sleep_disturbance"].isin([8, 9]))  # 8/9 -> NaN
+    df["is_stroke"]   = df["is_stroke"].where(~df["is_stroke"].isin([8, 9]))      # 8/9 -> NaN
+    df["moderate_act_last7d"]   = df["moderate_act_last7d"].where(~df["moderate_act_last7d"].isin([8, 9]))      # 8/9 -> NaN
+    df["walking_last7d"]   = df["walking_last7d"].where(~df["walking_last7d"].isin([8, 9]))      # 8/9 -> NaN
+    df["hard_act_last7d"]   = df["hard_act_last7d"].where(~df["hard_act_last7d"].isin([8, 9]))      # 8/9 -> NaN
 
 
-#     --- (2) BMI dihitung sendiri (tidak ada di dataset baru) ---
+#     --- (2) BMI di filter nilai outlier nya, baru dihitung sendiri ---
+    df.loc[
+        (df["height_cm"] < 100) | (df["height_cm"] > 200),
+        "height_cm"
+    ] = np.nan
+
+    df.loc[
+        (df["weight_kg"] < 25) | (df["weight_kg"] > 200),
+        "weight_kg"
+    ] = np.nan
+    
     df["bmi"] = df["weight_kg"] / (df["height_cm"] / 100) ** 2
 
 
     # --- (3) Koreksi tekanan darah mustahil SEBELUM membuat label ---
-    bad_bp = (
-        (df["bp_diastolic"] >= df["bp_systolic"]) |
-        (df["bp_systolic"] < 60) | (df["bp_systolic"] > 260) |
-        (df["bp_diastolic"] < 30) | (df["bp_diastolic"] > 200)
-    ).fillna(False)
+    bad_bp = df["bp_diastolic"] >= df["bp_systolic"].fillna(False)
     print(f"Tekanan darah mustahil disisihkan: {int(bad_bp.sum())} baris")
     df.loc[bad_bp, ["bp_systolic", "bp_diastolic"]] = np.nan
 
@@ -74,9 +85,18 @@ def siapkan_data(path):
 
     # --- (5) Fitur biner untuk analisis bivariat (kode IFLS 1/3 -> 1/0) ---
     df["is_female"] = df["sex"].map({1.0: 0, 3.0: 1})            # 3 = perempuan
-    df["is_smoker"]    = df["is_smoking"].map({1.0: 1, 3.0: 0})     # 1 = ya  (kolom asli MASIH 1/3!)
-    df["diabetes"]  = df["is_diabetes"].map({1.0: 1, 3.0: 0})    # 1 = ya
+    df["has_tobacco"]    = df["has_tobacco"].map({1.0: 1, 3.0: 0})     # 1 = ya  
+    df["is_diabetes"]  = df["is_diabetes"].map({1.0: 1, 3.0: 0})    # 1 = ya
     df["is_high_cholesterol"]  = df["is_high_cholesterol"].map({1.0: 1, 3.0: 0})
+    df["is_kidney_disease"]  = df["is_kidney_disease"].map({1.0: 1, 3.0: 0})
+    df["is_stroke"]  = df["is_stroke"].map({1.0: 1, 3.0: 0})
+    df["has_noodles"]  = df["has_noodles"].map({1.0: 1, 3.0: 0})
+    df["has_fast_food"]  = df["has_fast_food"].map({1.0: 1, 3.0: 0})
+    df["has_fried_food"]  = df["has_fried_food"].map({1.0: 1, 3.0: 0})
+    df["hard_act_last7d"]  = df["hard_act_last7d"].map({1.0: 1, 3.0: 0})
+    df["moderate_act_last7d"]  = df["moderate_act_last7d"].map({1.0: 1, 3.0: 0})
+    df["walking_last7d"]  = df["walking_last7d"].map({1.0: 1, 3.0: 0})
+
 
     # --- (6) Pengelompokan untuk analisis bivariat ---
     df["kel_umur"] = pd.cut(df["age"], [0, 30, 40, 50, 60, 70, 200],
@@ -93,7 +113,7 @@ def bagian_A(path):
     garis("A. STRUKTUR & DIMENSI DATA")
     raw = pd.read_csv(path, low_memory=False)
     print("Dimensi (baris, kolom):", raw.shape)
-    print("pidlink unik          :", raw["pidlink"].nunique(), "dari", len(raw))
+    print("hhid14 dan pid14 unik :", raw[['hhid14', 'pid14']].drop_duplicates().shape[0], "dari", len(raw))
     print("Baris duplikat penuh  :", raw.duplicated().sum())
     # print("\nPersentase nilai hilang per kolom:")
     # print((raw.isna().mean()*100).round(1).sort_values(ascending=False).to_string())
@@ -101,7 +121,7 @@ def bagian_A(path):
     # =========================
     # Missing Value Report
     # =========================
-    missing = (raw.isna().mean() * 100).round(2).sort_values(ascending=False)
+    missing = (raw.isna().mean() * 100).round().sort_values(ascending=False)
 
     print("\nPersentase nilai hilang per kolom:")
     print(missing.to_string())
@@ -121,7 +141,7 @@ def bagian_A(path):
         plt.text(
             bar.get_x() + bar.get_width()/2,
             val,
-            f"{val:.1f}%",
+            f"{int(val)}%",
             ha="center",
             va="bottom",
             fontsize=8
@@ -180,7 +200,7 @@ def bagian_B(df):
 # ===========================================================================
 def bagian_C(df):
     garis("C. STATISTIK DESKRIPTIF VARIABEL NUMERIK")
-    num = ["age", "weight_kg", "height_cm", "waist_cm", "bmi", "bp_systolic", "bp_diastolic"]
+    num = ["age", "weight_kg", "height_cm", "bmi", "bp_systolic", "bp_diastolic"]
     print(df[num].describe().T[["count", "mean", "std", "min", "50%", "max"]].round(2).to_string())
 
     plt.figure(figsize=(7, 5.8))
@@ -196,10 +216,9 @@ def bagian_C(df):
 def bagian_D(df):
     garis("D. ANALISIS BIVARIAT: HUBUNGAN FAKTOR DENGAN HIPERTENSI")
 
-    # Korelasi point-biserial fitur numerik/ordinal dengan target
+    # Korelasi point-biserial fitur numerik dengan target
     print("Korelasi point-biserial dengan hipertensi:")
-    kand = ["age", "bmi", "waist_cm", "sleep_quality", "sleep_disturbance",
-            "freq_walking", "freq_moderate_act", "freq_hard_act", "freq_fast_food", "freq_soda", "freq_fried_food"]
+    kand = ["age", "bmi", ]
     for c in kand:
         if c in df.columns:
             d = df[[c, "hipertensi"]].dropna()
@@ -228,9 +247,117 @@ def bagian_D(df):
     plt.title("Tingkat Hipertensi per Kategori BMI")
     plt.ylabel("% hipertensi"); plt.xlabel("Kategori BMI (WHO)")
     plt.ylim(0, gb.max()*1.15); simpan("g7_bmi.png")
+    
+    
+#     # g8: Jumlah Responden Hipertensi berdasarkan Suku Bangsa
+#     # Mapping kode AR15d -> Nama Suku Bangsa
+#     ethnicity_map = {
+#         1: "Jawa",
+#         2: "Sunda",
+#         3: "Bali",
+#         4: "Batak",
+#         5: "Bugis",
+#         6: "Tionghoa",
+#         7: "Madura",
+#         8: "Sasak",
+#         10: "Banjar",
+#         11: "Bima-Dompu",
+#         12: "Makassar",
+#         13: "Nias",
+#         14: "Palembang",
+#         15: "Sumbawa",
+#         16: "Toraja",
+#         17: "Betawi",
+#         18: "Dayak",
+#         19: "Melayu",
+#         20: "Komering",
+#         21: "Ambon",
+#         22: "Manado",
+#         23: "Aceh",
+#         25: "SumBagSel Lain",
+#         26: "Banten",
+#         27: "Cirebon",
+#         28: "Gorontalo",
+#         29: "Kutai",
+#         95: "Lainnya",
+#         99: "Tidak Diketahui"
+#     }
 
-    # g8: faktor biner Ya vs Tidak
-    feats = [("diabetes", "Diabetes"), ("is_smoker", "Perokok"), ("is_female", "Apakah Perempuan"), ("is_high_cholesterol", "Kolesterol")]
+#     df["ethnicity_name"] = df["ethnicity"].map(ethnicity_map)
+
+#     ge = (
+#         df["ethnicity_name"]
+#         .value_counts()
+#         .sort_values(ascending=False)
+#     )
+
+#     plt.figure(figsize=(14,6))
+
+#     bars = plt.bar(
+#         ge.index,
+#         ge.values,
+#         color=plt.cm.Blues(np.linspace(.35, .9, len(ge)))
+#     )
+
+#     for bar, v in zip(bars, ge.values):
+#         plt.text(
+#             bar.get_x()+bar.get_width()/2,
+#             v,
+#             f"{v}",
+#             ha="center",
+#             va="bottom",
+#             fontsize=8
+#         )
+
+#     plt.title("Jumlah Responden berdasarkan Suku Bangsa")
+#     plt.xlabel("Suku Bangsa")
+#     plt.ylabel("Jumlah Responden")
+#     plt.xticks(rotation=45, ha="right")
+#     plt.ylim(0, ge.max()*1.15)
+
+#     plt.tight_layout()
+
+#     simpan("g8_ethnicity_total.png")
+
+
+# # Jumlah yang hipertensi berdasarkan suku bangsa
+#     ge = (
+#         df[df["hipertensi"] == 1]["ethnicity_name"]
+#         .value_counts()
+#         .sort_values(ascending=False)
+#     )
+
+#     plt.figure(figsize=(14,6))
+
+#     bars = plt.bar(
+#         ge.index,
+#         ge.values,
+#         color=plt.cm.Oranges(np.linspace(.35, .9, len(ge)))
+#     )
+
+#     for bar, v in zip(bars, ge.values):
+#         plt.text(
+#             bar.get_x()+bar.get_width()/2,
+#             v,
+#             f"{v}",
+#             ha="center",
+#             va="bottom",
+#             fontsize=8
+#         )
+
+#     plt.title("Jumlah Responden Hipertensi berdasarkan Suku Bangsa")
+#     plt.xlabel("Suku Bangsa")
+#     plt.ylabel("Jumlah Responden Hipertensi")
+#     plt.xticks(rotation=45, ha="right")
+#     plt.ylim(0, ge.max()*1.15)
+
+#     plt.tight_layout()
+
+#     simpan("g8_ethnicity_hypertension.png")
+
+
+    # g9: faktor biner Ya vs Tidak
+    feats = [("is_diabetes", "Diabetes"), ("has_tobacco", "Perokok"), ("is_female", "Apakah Perempuan"), ("is_high_cholesterol", "Kolesterol"), ("is_kidney_disease", "Penyakit Ginjal")]
     ya  = [df[df[c] == 1]["hipertensi"].mean()*100 for c, _ in feats]
     tdk = [df[df[c] == 0]["hipertensi"].mean()*100 for c, _ in feats]
     print("\nTingkat hipertensi menurut faktor biner (Ya vs Tidak):")
@@ -244,29 +371,84 @@ def bagian_D(df):
     for i, (a, t) in enumerate(zip(ya, tdk)):
         plt.text(i-w/2, a, f"{a:.0f}%", ha="center", va="bottom", fontsize=8)
         plt.text(i+w/2, t, f"{t:.0f}%", ha="center", va="bottom", fontsize=8)
-    simpan("g8_biner.png")
-
-    # g9: per tingkat kualitas tidur (FITUR BARU)
-    gs = df.dropna(subset=["sleep_quality"]).groupby("sleep_quality", observed=True)["hipertensi"].mean()*100
-    print("\nTingkat hipertensi per skor kualitas tidur (%):\n" + gs.round(1).to_string())
-    plt.figure(figsize=(7, 4.5))
-    b = plt.bar(gs.index.astype(int).astype(str), gs.values, color=plt.cm.Purples(np.linspace(.4, .9, len(gs))))
-    for bar, v in zip(b, gs.values):
-        plt.text(bar.get_x()+bar.get_width()/2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=9)
-    plt.title("Tingkat Hipertensi per Skor Kualitas Tidur")
-    plt.ylabel("% hipertensi"); plt.xlabel("Skor kualitas tidur")
-    plt.ylim(0, gs.max()*1.15); simpan("g9_sleep_quality.png")
+    simpan("g8_biner_part1.png")
     
-        # g10: per tingkat gangguan tidur (FITUR BARU)
-    gs = df.dropna(subset=["sleep_disturbance"]).groupby("sleep_disturbance", observed=True)["hipertensi"].mean()*100
-    print("\nTingkat hipertensi per Frekuensi gangguan tidur (%):\n" + gs.round(1).to_string())
+    
+    feats = [("moderate_act_last7d", "Kegiatan fisik sedang"), ("hard_act_last7d", "Kegiatan fisik berat"), ("walking_last7d", "Jalan Kaki"), ("is_stroke", "Stroke")]
+    ya  = [df[df[c] == 1]["hipertensi"].mean()*100 for c, _ in feats]
+    tdk = [df[df[c] == 0]["hipertensi"].mean()*100 for c, _ in feats]
+    print("\nTingkat hipertensi menurut faktor biner (Ya vs Tidak):")
+    for (c, lbl), a, t in zip(feats, ya, tdk):
+        print(f"  {lbl:10s}: Ya={a:.1f}%  Tidak={t:.1f}%  (selisih {a-t:+.1f}%)")
     plt.figure(figsize=(7, 4.5))
-    b = plt.bar(gs.index.astype(int).astype(str), gs.values, color=plt.cm.Purples(np.linspace(.4, .9, len(gs))))
-    for bar, v in zip(b, gs.values):
-        plt.text(bar.get_x()+bar.get_width()/2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=9)
-    plt.title("Tingkat Hipertensi per Frekuensi Gangguan Tidur")
-    plt.ylabel("% hipertensi"); plt.xlabel("Frekuensi gangguan tidur")
-    plt.ylim(0, gs.max()*1.15); simpan("g10_sleep_frequency.png")
+    x = np.arange(len(feats)); w = .38
+    plt.bar(x-w/2, ya, w, label="Ya", color=H); plt.bar(x+w/2, tdk, w, label="Tidak", color=N)
+    plt.xticks(x, [l for _, l in feats]); plt.legend()
+    plt.ylabel("% hipertensi"); plt.title("Tingkat Hipertensi menurut Faktor Biner (Ya vs Tidak)")
+    for i, (a, t) in enumerate(zip(ya, tdk)):
+        plt.text(i-w/2, a, f"{a:.0f}%", ha="center", va="bottom", fontsize=8)
+        plt.text(i+w/2, t, f"{t:.0f}%", ha="center", va="bottom", fontsize=8)
+    simpan("g8_biner_part2.png")
+    
+
+    feats = [
+        ("has_fast_food", "konsumsi fast-food 7 hari terakhir"),
+        ("has_fried_food", "konsumsi gorengan 7 hari terakhir"),
+        ("has_noodles", "konsumsi mie instan 7 hari terakhir")
+    ]
+
+    ya  = [df[df[c] == 1]["hipertensi"].mean() * 100 for c, _ in feats]
+    tdk = [df[df[c] == 0]["hipertensi"].mean() * 100 for c, _ in feats]
+
+    print("\nTingkat hipertensi menurut faktor biner (Ya vs Tidak):")
+    for (c, lbl), a, t in zip(feats, ya, tdk):
+        print(f"  {lbl:35s}: Ya={a:.1f}%  Tidak={t:.1f}%  (selisih {a-t:+.1f}%)")
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x = np.arange(len(feats))
+    w = 0.38
+
+    ax.bar(x - w/2, ya, w, label="Ya", color=H)
+    ax.bar(x + w/2, tdk, w, label="Tidak", color=N)
+
+    # bungkus label supaya tidak saling tabrakan
+    labels = [textwrap.fill(l, width=18) for _, l in feats]
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=9)
+
+    ax.set_ylabel("% hipertensi")
+    ax.set_title("Tingkat Hipertensi menurut Faktor Biner (Ya vs Tidak)")
+    ax.legend()
+
+    for i, (a, t) in enumerate(zip(ya, tdk)):
+        ax.text(i - w/2, a, f"{a:.0f}%", ha="center", va="bottom", fontsize=8)
+        ax.text(i + w/2, t, f"{t:.0f}%", ha="center", va="bottom", fontsize=8)
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.22)  # penting untuk label 2 baris
+    simpan("g8_biner_part3.png")
+
+    # # g9: per tingkat kualitas tidur (FITUR BARU)
+    # gs = df.dropna(subset=["sleep_quality"]).groupby("sleep_quality", observed=True)["hipertensi"].mean()*100
+    # print("\nTingkat hipertensi per skor kualitas tidur (%):\n" + gs.round(1).to_string())
+    # plt.figure(figsize=(7, 4.5))
+    # b = plt.bar(gs.index.astype(int).astype(str), gs.values, color=plt.cm.Purples(np.linspace(.4, .9, len(gs))))
+    # for bar, v in zip(b, gs.values):
+    #     plt.text(bar.get_x()+bar.get_width()/2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=9)
+    # plt.title("Tingkat Hipertensi per Skor Kualitas Tidur")
+    # plt.ylabel("% hipertensi"); plt.xlabel("Skor kualitas tidur")
+    # plt.ylim(0, gs.max()*1.15); simpan("g9_sleep_quality.png")
+    
+    #     # g10: per tingkat gangguan tidur (FITUR BARU)
+    # gs = df.dropna(subset=["sleep_disturbance"]).groupby("sleep_disturbance", observed=True)["hipertensi"].mean()*100
+    # print("\nTingkat hipertensi per Frekuensi gangguan tidur (%):\n" + gs.round(1).to_string())
+    # plt.figure(figsize=(7, 4.5))
+    # b = plt.bar(gs.index.astype(int).astype(str), gs.values, color=plt.cm.Purples(np.linspace(.4, .9, len(gs))))
+    # for bar, v in zip(b, gs.values):
+    #     plt.text(bar.get_x()+bar.get_width()/2, v, f"{v:.0f}%", ha="center", va="bottom", fontsize=9)
+    # plt.title("Tingkat Hipertensi per Frekuensi Gangguan Tidur")
+    # plt.ylabel("% hipertensi"); plt.xlabel("Frekuensi gangguan tidur")
+    # plt.ylim(0, gs.max()*1.15); simpan("g10_sleep_frequency.png")
 
 
 def main():
@@ -277,7 +459,7 @@ def main():
     bagian_C(df)
     bagian_D(df)
     garis("EDA SELESAI")
-    print("9 grafik dihasilkan: g1_target_balance.png ... g10_sleep_frequency.png")
+    print("11 grafik dihasilkan: g1_target_balance.png - g8_biner_part3.png ")
 
 
 if __name__ == "__main__":

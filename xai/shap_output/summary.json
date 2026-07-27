@@ -10,14 +10,14 @@
     "sleep_quality",
     "sleep_disturbance"
   ],
-  "tree_time_s": 0.348388,
+  "tree_time_s": 3.612648,
   "global_mean_abs_shap": {
-    "age": 0.8818653225898743,
+    "age": 0.8818652033805847,
     "is_female": 0.15555916726589203,
-    "bmi": 0.4561487138271332,
+    "bmi": 0.45614874362945557,
     "is_smoker": 0.017733808606863022,
     "has_diabetes": 0.009528511203825474,
-    "has_high_cholesterol": 0.01606214977800846,
+    "has_high_cholesterol": 0.016062147915363312,
     "sleep_quality": 0.03842941299080849,
     "sleep_disturbance": 0.011630408465862274
   },
@@ -106,8 +106,8 @@
   },
   "explainer_comparison": {
     "compare_n": 50,
-    "tree_time_s": 0.071007,
-    "kernel_time_s": 0.710188,
+    "tree_time_s": 0.129651,
+    "kernel_time_s": 3.455407,
     "mean_abs_diff_shap_prob": 0.0013267757432456329,
     "mean_contrib_diff_pct": 0.40626623162608905
   }

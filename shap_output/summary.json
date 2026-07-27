@@ -1,0 +1,263 @@
+{
+  "explanation_set": "test",
+  "explanation_set_path": "test_hipertensi.csv",
+  "background_set_path": "train_hipertensi.csv",
+  "n_samples_explained": 6051,
+  "n_samples_train": 24200,
+  "model_threshold": 0.5168928503990173,
+  "feature_names": [
+    "age",
+    "is_female",
+    "bmi",
+    "has_tobacco",
+    "has_diabetes",
+    "has_high_cholesterol",
+    "has_kidney_disease",
+    "has_stroke",
+    "has_veggies",
+    "has_fried_food",
+    "has_soda",
+    "has_noodles",
+    "has_fast_food",
+    "freq_veggies",
+    "freq_fried_food",
+    "freq_soda",
+    "freq_noodles",
+    "freq_fast_food",
+    "hard_act_last7d",
+    "moderate_act_last7d",
+    "walking_last7d"
+  ],
+  "tree_time_s": 0.209068,
+  "global_mean_abs_shap": {
+    "age": 0.8758170008659363,
+    "is_female": 0.1445005238056183,
+    "bmi": 0.4460693597793579,
+    "has_tobacco": 0.0196000337600708,
+    "has_diabetes": 0.006878897547721863,
+    "has_high_cholesterol": 0.013400224968791008,
+    "has_kidney_disease": 0.002009691670536995,
+    "has_stroke": 0.012369818054139614,
+    "has_veggies": 0.006205253303050995,
+    "has_fried_food": 0.0015760957030579448,
+    "has_soda": 0.01312498189508915,
+    "has_noodles": 0.0008364872774109244,
+    "has_fast_food": 0.002781793475151062,
+    "freq_veggies": 0.030970033258199692,
+    "freq_fried_food": 0.003563895355910063,
+    "freq_soda": 0.006305870600044727,
+    "freq_noodles": 0.019658183678984642,
+    "freq_fast_food": 0.0016457024030387402,
+    "hard_act_last7d": 0.0018976120045408607,
+    "moderate_act_last7d": 0.02921496517956257,
+    "walking_last7d": 0.003337477333843708
+  },
+  "local_index": 0,
+  "local_true_label": 0,
+  "base_value_logodds": 6.984772335272282e-05,
+  "fx_logodds": -1.5876973956619622,
+  "base_value_prob": 0.5000174619308311,
+  "fx_prob": 0.16970810389704244,
+  "local_shap_logodds": {
+    "age": -1.0391737222671509,
+    "is_female": 0.22920405864715576,
+    "bmi": -0.6682978272438049,
+    "has_tobacco": -0.027307379990816116,
+    "has_diabetes": -0.004425217397511005,
+    "has_high_cholesterol": -0.010673148557543755,
+    "has_kidney_disease": -0.0009372947970405221,
+    "has_stroke": -0.007742777466773987,
+    "has_veggies": 0.00381292961537838,
+    "has_fried_food": 0.0005712028359994292,
+    "has_soda": -0.014260154217481613,
+    "has_noodles": 0.00019416226132307202,
+    "has_fast_food": 0.0010068509727716446,
+    "freq_veggies": -0.010320289060473442,
+    "freq_fried_food": 0.0011742899660021067,
+    "freq_soda": -0.006915796082466841,
+    "freq_noodles": -0.002237202599644661,
+    "freq_fast_food": -0.002126893261447549,
+    "hard_act_last7d": 0.0001618987589608878,
+    "moderate_act_last7d": -0.03094332106411457,
+    "walking_last7d": 0.0014684508787468076
+  },
+  "analisis_ambang_batas_semua_fitur": {
+    "age": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Positif (Semakin tinggi fitur -> Risiko naik)",
+      "nilai_korelasi": 0.9733,
+      "est_titik_netral_mean": 43.32,
+      "rentang_zona_netral": [
+        40.0,
+        45.0
+      ]
+    },
+    "is_female": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.1441,
+        "1.0": -0.1424
+      }
+    },
+    "bmi": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Positif (Semakin tinggi fitur -> Risiko naik)",
+      "nilai_korelasi": 0.9752,
+      "est_titik_netral_mean": 23.45,
+      "rentang_zona_netral": [
+        20.93,
+        25.55
+      ]
+    },
+    "has_tobacco": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0161,
+        "1.0": -0.025
+      }
+    },
+    "has_diabetes": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0038,
+        "1.0": 0.1352
+      }
+    },
+    "has_high_cholesterol": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0075,
+        "1.0": 0.1401
+      }
+    },
+    "has_kidney_disease": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0007,
+        "1.0": -0.0602
+      }
+    },
+    "has_stroke": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0069,
+        "1.0": 0.6968
+      }
+    },
+    "has_veggies": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0222,
+        "1.0": -0.0032
+      }
+    },
+    "has_fried_food": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0027,
+        "1.0": 0.001
+      }
+    },
+    "has_soda": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0075,
+        "1.0": 0.0363
+      }
+    },
+    "has_noodles": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.001,
+        "1.0": 0.0004
+      }
+    },
+    "has_fast_food": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0012,
+        "1.0": -0.0123
+      }
+    },
+    "freq_veggies": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "nilai_korelasi": -0.7057,
+      "est_titik_netral_mean": 3.44,
+      "rentang_zona_netral": [
+        0.0,
+        7.0
+      ]
+    },
+    "freq_fried_food": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "nilai_korelasi": -0.2619,
+      "est_titik_netral_mean": 0.31,
+      "rentang_zona_netral": [
+        0.0,
+        1.0
+      ]
+    },
+    "freq_soda": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Positif (Semakin tinggi fitur -> Risiko naik)",
+      "nilai_korelasi": 0.4783,
+      "est_titik_netral_mean": 0.04,
+      "rentang_zona_netral": [
+        0.0,
+        1.0
+      ]
+    },
+    "freq_noodles": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "nilai_korelasi": -0.0774,
+      "est_titik_netral_mean": 1.23,
+      "rentang_zona_netral": [
+        0.0,
+        2.0
+      ]
+    },
+    "freq_fast_food": {
+      "tipe_fitur": "kontinu",
+      "arah_korelasi": "Negatif (Semakin tinggi fitur -> Risiko turun)",
+      "nilai_korelasi": -0.1125,
+      "est_titik_netral_mean": 0.01,
+      "rentang_zona_netral": [
+        0.0,
+        1.0
+      ]
+    },
+    "hard_act_last7d": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0005,
+        "1.0": -0.0043
+      }
+    },
+    "moderate_act_last7d": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": 0.0338,
+        "1.0": -0.0254
+      }
+    },
+    "walking_last7d": {
+      "tipe_fitur": "ordinal/biner",
+      "mean_shap_per_kategori": {
+        "0.0": -0.0047,
+        "1.0": 0.0015
+      }
+    }
+  },
+  "explainer_comparison": {
+    "compare_n": 50,
+    "background_n": 100,
+    "background_from": "train",
+    "tree_time_s": 0.125829,
+    "kernel_time_s": 11.782175,
+    "mean_abs_diff_shap_prob": 0.0007509036782657459,
+    "mean_contrib_diff_pct": 0.21398243497402136
+  }
+}

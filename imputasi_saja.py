@@ -26,12 +26,13 @@ try:
     
     # 3. Definisikan pengelompokkan kolom untuk strategi imputasi
     # Kolom numerik diimputasi dengan Median
-    num_cols = ["age", "bmi"]  
-    
+    num_cols = ["age", "bmi", "freq_veggies", "freq_fried_food", "freq_soda", "freq_noodles", "freq_fast_food"] 
+         
     # Kolom kategorikal/biner diimputasi dengan Most Frequent (Modus)
     cat_cols = [
-        "is_female", "is_smoker", "has_diabetes", 
-        "has_high_cholesterol", "sleep_disturbance", "sleep_quality"
+        "is_female", "has_tobacco", "has_diabetes", "has_high_cholesterol", "has_kidney_disease", "has_stroke",
+        "has_fast_food", "has_veggies", "has_fried_food", "has_soda", "has_noodles", 
+        "hard_act_last7d", "walking_last7d", "moderate_act_last7d"
     ]
     
     # 4. Inisialisasi Imputer

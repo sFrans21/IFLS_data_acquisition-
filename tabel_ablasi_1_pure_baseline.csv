@@ -1,0 +1,5 @@
+Algoritma,ROC-AUC,Recall (Sens),Specificity,F1-Score,Akurasi,PR-AUC
+Logistic Regression,0.7752,0.4051,0.9075,0.4974,0.7605,0.5821
+Random Forest,0.7551,0.4181,0.8818,0.4907,0.7462,0.5492
+XGBoost,0.7625,0.4333,0.8844,0.5059,0.7524,0.5538
+CatBoost,0.7774,0.4271,0.8944,0.5077,0.7577,0.5796
